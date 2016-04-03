@@ -22,7 +22,7 @@ Signet will allow for single-line strings which contain all of the following:
 
 Example function signature:
 
-"Array`<number>`, [number] => number"
+"Array`<number>`, `[number]` => number"
 
 Signet development will proceed following the checklist below.  The intent is to deliver useful behavior at each step, so
 the list should be viewed as a planned output order.

@@ -1,0 +1,29 @@
+{
+  "name": "signet",
+  "version": "0.1.0",
+  "description": "A function type signature library for Javascript",
+  "main": "./src/signet-node.js",
+  "scripts": {
+    "test": "node ./node_modules/mocha/bin/mocha ./test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cmstead/signet.git"
+  },
+  "keywords": [
+    "type",
+    "function",
+    "signature",
+    "contract"
+  ],
+  "author": "Chris Stead",
+  "license": "MPL-2.0",
+  "bugs": {
+    "url": "https://github.com/cmstead/signet/issues"
+  },
+  "homepage": "https://github.com/cmstead/signet#readme",
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "mocha": "^2.4.5"
+  }
+}
