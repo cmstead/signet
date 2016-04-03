@@ -24,9 +24,42 @@ Example function signature:
 
 "Array`<number>`, `[number]` => number"
 
+## Usage
+
+Signet can be used two different ways to sign your functions, as a function wrapper or as a decoration of your function. 
+Below are examples of the two use cases:
+
+Function wrapper style:
+
+    const add = signet.sign('number, number => number',
+        function add (a, b) {
+            return a + b;
+        }
+    );
+    
+    console.log(add.signature); // number, number => number
+
+Function decoration style:
+
+    signet.sign('number, number => number', add);
+    function add (a, b) {
+        return a + b;
+    }
+
+Signet signatures are immutable, which means once they are declared, they cannot be tampered with. This adds a guarantee
+to the stability of your in-code documentation. Let's take a look:
+
+    signet.sign('number, number => number', add);
+    
+    add.signature = 'I am trying to change the signature property';
+    console.log(add.signature); // number, number => number
+
+## Development
+
 Signet development will proceed following the checklist below.  The intent is to deliver useful behavior at each step, so
 the list should be viewed as a planned output order.
 
-- [ ] Set type signature string on a function with the signature property (signet.sign)
+- [x] Set type signature string on a function with the signature property (signet.sign)
+- [x] Preliminary validation of signature string for general format (full correctness not required)
 - [ ] Validation of signature string, ensuring only valid signature strings are added (parsing and interpretation)
 - [ ] Test validation of signature string, when possible, to ensure signature is fresh and valid; only basic Javascript types will be tested
