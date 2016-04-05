@@ -50,6 +50,10 @@ describe('signet', function () {
             assert.throws(signet.sign.bind(null, 'number => => number', add));
         });
         
+        it('should throw an error if final type contains multiple definitions', function () {
+            assert.throws(signet.sign.bind(null, 'number => number, string', add));
+        });
+        
         it('should return original function', function () {
             var result = signet.sign('number, number => number', add);
             

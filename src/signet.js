@@ -1,8 +1,62 @@
 var signet = (function () {
     'use strict';
 
+    // Predicate functions
+    
     function runningInNode() {
         return typeof module !== 'undefined' && typeof module.exports !== 'undefined';
+    }
+
+    function isTypeValid (type){
+        return typeof type === 'string' && type.trim() !== '';
+    }
+
+    function isLastTypeOk (tokenTree){
+        return tokenTree[tokenTree.length - 1].filter(isTypeValid).length === 1;
+    }
+
+    function hasFatArrow (tokenTree){
+        return tokenTree.length > 1;
+    }
+
+    function isTokenTreeValid (tokenTree){
+        return tokenTree
+            .reduce(function (validated, tokens) {
+                return validated && tokens.filter(isTypeValid).length > 0;
+            }, hasFatArrow(tokenTree) && isLastTypeOk(tokenTree));
+    }
+
+    function hasNoArgs (token){
+        return token.match(/^\(\s*\)$/) !== null;
+    }
+
+    // Utility functions
+
+    function stripParens (rawToken){
+        var token = rawToken.trim();
+        return hasNoArgs(token) ? token : token.replace(/[()]/g, '');
+    }
+    
+    function splitTypes (token){
+        return token.split(/\s*\,\s*/g);
+    }
+
+    function buildTokenTree (signature){
+        return signature
+            .split(/\s*\=\>\s*/g)
+            .map(stripParens)
+            .map(splitTypes);
+    }
+
+    // Throw on error functions
+    
+    function throwOnInvalidSignature (signature){
+        var tokenTree = buildTokenTree(signature);
+        var message = 'Invalid function signature; ensure all input and output paths are valid.';
+        
+        if(!isTokenTreeValid(tokenTree)) {
+            throw new Error(message);
+        }
     }
 
     function throwOnTypeMismatch(type, value, message) {
@@ -10,33 +64,13 @@ var signet = (function () {
             throw new TypeError(message + ', you provided ' + typeof value);
         }
     }
-
-    function isFunctionNotation(signature) {
-        return signature.match(/\=\>/g) !== null;
-    }
-
-    function isEmptyToken(token) {
-        return token.trim() === '';
-    }
-
-    function containsValidTypes(signatureTokens) {
-        return signatureTokens.filter(isEmptyToken).length === 0;
-    }
-
-    function validateSignature(signature) {
-        var signatureTokens = signature.split('=>');
-        return isFunctionNotation(signature) && containsValidTypes(signatureTokens);
-    }
-
+    
+    // Core functionality
+    
     function sign(signature, userFn) {
-        var signatureMsg = 'Invalid signature. All signatures must be formatted as: type list => type list => ... => type';
-
         throwOnTypeMismatch('string', signature, 'Signature must be a string');
         throwOnTypeMismatch('function', userFn, 'Signee must be a function');
-
-        if (!validateSignature(signature)) {
-            throw new SyntaxError(signatureMsg);
-        }
+        throwOnInvalidSignature(signature);
 
         Object.defineProperty(userFn, 'signature', {
             value: signature,

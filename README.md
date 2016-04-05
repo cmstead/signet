@@ -23,6 +23,7 @@ Signet will allow for single-line strings which contain all of the following:
 Example function signature:
 
 "Array`<number>`, `[number]` => number"
+"() => function"
 
 ## Usage
 
@@ -61,5 +62,6 @@ the list should be viewed as a planned output order.
 
 - [x] Set type signature string on a function with the signature property (signet.sign)
 - [x] Preliminary validation of signature string for general format (full correctness not required)
-- [ ] Validation of signature string, ensuring only valid signature strings are added (parsing and interpretation)
+- [x] Validation of signature string, ensuring only valid signature strings are added (parsing and interpretation)
+- [ ] Provide functionality to map types to named parameters as possible
 - [ ] Test validation of signature string, when possible, to ensure signature is fresh and valid; only basic Javascript types will be tested
