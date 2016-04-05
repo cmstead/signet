@@ -2,10 +2,6 @@ var signet = (function() {
     'use strict';
 
     // State machine for type lexer
-    function stripValidTypes (types){
-        return types.filter(isTypeInvalid);
-    }
-
     var rules = [
         function initRule(key, types) {
             return types.length > 1 ? 'init' : key;
@@ -20,7 +16,7 @@ var signet = (function() {
         },
 
         function typeRule (key, types){
-            return stripValidTypes(types).length > 0 ? 'fail' : key;
+            return types.filter(isTypeInvalid).length > 0 ? 'fail' : key;
         }
     ];
 
@@ -38,21 +34,31 @@ var signet = (function() {
 
     // Predicate functions
 
-    function runningInNode() {
-        return typeof module !== 'undefined' && typeof module.exports !== 'undefined';
-    }
-
     function isTypeInvalid(type) {
         // This will expand over time to perform a richer test
         return type === '';
     }
 
-    function isTokenTreeValid(tokenTree) {
+    function hasNoArgs(token) {
+        return token.match(/^\(\s*\)$/) !== null;
+    }
+
+    function verifyTokenTree(tokenTree) {
         return tokenTree.length > 1 && tokenTree.reduce(updateState, 'init') === 'accept';
     }
 
-    function hasNoArgs(token) {
-        return token.match(/^\(\s*\)$/) !== null;
+    // Throw on error functions
+
+    function throwOnTypeMismatch(type, value, message) {
+        if (typeof value !== type) {
+            throw new TypeError(message + ', you provided ' + typeof value);
+        }
+    }
+
+    function throwOnInvalidSignature(tokenTree) {
+        if (!verifyTokenTree(tokenTree)) {
+            throw new Error('Invalid function signature; ensure all input and output paths are valid.');
+        }
     }
 
     // Utility functions
@@ -62,12 +68,8 @@ var signet = (function() {
         return hasNoArgs(token) ? token : token.replace(/[()]/g, '');
     }
 
-    function splitTypes(token) {
-        return token.split(/\s*\,\s*/g);
-    }
-
     function stripParensAndSplit(rawToken) {
-        return splitTypes(stripParens(rawToken));
+        return stripParens(rawToken).split(/\s*\,\s*/g);
     }
 
     function parseSignature(signature) {
@@ -76,18 +78,11 @@ var signet = (function() {
             .map(stripParensAndSplit);
     }
 
-    // Throw on error functions
-
-    function throwOnInvalidSignature(tokenTree) {
-        if (!isTokenTreeValid(tokenTree)) {
-            throw new Error('Invalid function signature; ensure all input and output paths are valid.');
-        }
-    }
-
-    function throwOnTypeMismatch(type, value, message) {
-        if (typeof value !== type) {
-            throw new TypeError(message + ', you provided ' + typeof value);
-        }
+    function attachProp (userFn, propName, value){
+        Object.defineProperty(userFn, propName, {
+            value: value,
+            writeable: false
+        });
     }
 
     // Core functionality
@@ -100,15 +95,8 @@ var signet = (function() {
 
         throwOnInvalidSignature(tokenTree);
 
-        Object.defineProperty(userFn, 'signature', {
-            value: signature,
-            writeable: false
-        });
-
-        Object.defineProperty(userFn, 'signatureTree', {
-            value: tokenTree,
-            writeable: false
-        });
+        attachProp(userFn, 'signature', signature);
+        attachProp(userFn, 'signatureTree', tokenTree);
 
         return userFn;
     }
@@ -119,7 +107,7 @@ var signet = (function() {
         sign: sign
     };
 
-    if (runningInNode()) {
+    if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
         module.exports = signet;
     }
 
