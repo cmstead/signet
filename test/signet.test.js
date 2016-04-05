@@ -82,6 +82,10 @@ describe('signet', function () {
             assert.equal(result, add);
         });
         
+        it('should be signed', function () {
+            assert.equal(signet.sign.signature, 'string, function => function');
+        });
+        
     });    
     
 });

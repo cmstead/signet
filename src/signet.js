@@ -113,6 +113,8 @@ var signet = (function() {
         return userFn;
     }
 
+    sign('string, function => function', sign);
+    
     var signet = {
         sign: sign
     };
