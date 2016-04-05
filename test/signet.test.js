@@ -26,6 +26,24 @@ describe('signet', function () {
             assert.equal(add.signature, 'number, number => number');
         });
         
+        it('should add a signature AST to passed function', function () {
+            var expected = [['number', 'number'], ['number']];
+            
+            signet.sign('number, number => number', add);
+            
+            assert.equal(add.signatureTree.toString(), expected.toString());
+        });
+        
+        it('should make signatureTree property immutable', function () {
+            var expected = [['number', 'number'], ['number']];
+
+            signet.sign('number, number => number', add);
+            
+            add.signatureTree = [];
+            
+            assert.equal(add.signatureTree.toString(), expected.toString());
+        });
+        
         it('should throw an error if signature is not a string', function () {
             assert.throws(signet.sign.bind(null, {}, add));
         });
@@ -52,6 +70,10 @@ describe('signet', function () {
         
         it('should throw an error if final type contains multiple definitions', function () {
             assert.throws(signet.sign.bind(null, 'number => number, string', add));
+        });
+        
+        it('should throw an error if a type is invalid in a list', function () {
+            assert.throws(signet.sign.bind(null, 'number, => number', add));
         });
         
         it('should return original function', function () {

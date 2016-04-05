@@ -1,61 +1,86 @@
-var signet = (function () {
+var signet = (function() {
     'use strict';
 
+    // State machine for type lexer
+    function stripValidTypes (types){
+        return types.filter(isTypeInvalid);
+    }
+
+    var rules = [
+        function initRule(key, types) {
+            return types.length > 1 ? 'init' : key;
+        },
+
+        function acceptRule(key, types) {
+            return types.length === 1 ? 'accept' : key;
+        },
+
+        function failRule(key, types) {
+            return types.length === 0 ? 'fail' : key;
+        },
+
+        function typeRule (key, types){
+            return stripValidTypes(types).length > 0 ? 'fail' : key;
+        }
+    ];
+
+    var states = {
+        init: rules,
+        accept: rules,
+        fail: [] // Always fails
+    }
+
+    function updateState(stateKey, value) {
+        return states[stateKey].reduce(function(key, rule) {
+            return rule(key, value);
+        }, stateKey);
+    }
+
     // Predicate functions
-    
+
     function runningInNode() {
         return typeof module !== 'undefined' && typeof module.exports !== 'undefined';
     }
 
-    function isTypeValid (type){
-        return typeof type === 'string' && type.trim() !== '';
+    function isTypeInvalid(type) {
+        // This will expand over time to perform a richer test
+        return type === '';
     }
 
-    function isLastTypeOk (tokenTree){
-        return tokenTree[tokenTree.length - 1].filter(isTypeValid).length === 1;
+    function isTokenTreeValid(tokenTree) {
+        return tokenTree.length > 1 && tokenTree.reduce(updateState, 'init') === 'accept';
     }
 
-    function hasFatArrow (tokenTree){
-        return tokenTree.length > 1;
-    }
-
-    function isTokenTreeValid (tokenTree){
-        return tokenTree
-            .reduce(function (validated, tokens) {
-                return validated && tokens.filter(isTypeValid).length > 0;
-            }, hasFatArrow(tokenTree) && isLastTypeOk(tokenTree));
-    }
-
-    function hasNoArgs (token){
+    function hasNoArgs(token) {
         return token.match(/^\(\s*\)$/) !== null;
     }
 
     // Utility functions
 
-    function stripParens (rawToken){
+    function stripParens(rawToken) {
         var token = rawToken.trim();
         return hasNoArgs(token) ? token : token.replace(/[()]/g, '');
     }
-    
-    function splitTypes (token){
+
+    function splitTypes(token) {
         return token.split(/\s*\,\s*/g);
     }
 
-    function buildTokenTree (signature){
+    function stripParensAndSplit(rawToken) {
+        return splitTypes(stripParens(rawToken));
+    }
+
+    function parseSignature(signature) {
         return signature
             .split(/\s*\=\>\s*/g)
-            .map(stripParens)
-            .map(splitTypes);
+            .map(stripParensAndSplit);
     }
 
     // Throw on error functions
-    
-    function throwOnInvalidSignature (signature){
-        var tokenTree = buildTokenTree(signature);
-        var message = 'Invalid function signature; ensure all input and output paths are valid.';
-        
-        if(!isTokenTreeValid(tokenTree)) {
-            throw new Error(message);
+
+    function throwOnInvalidSignature(tokenTree) {
+        if (!isTokenTreeValid(tokenTree)) {
+            throw new Error('Invalid function signature; ensure all input and output paths are valid.');
         }
     }
 
@@ -64,16 +89,24 @@ var signet = (function () {
             throw new TypeError(message + ', you provided ' + typeof value);
         }
     }
-    
+
     // Core functionality
-    
+
     function sign(signature, userFn) {
         throwOnTypeMismatch('string', signature, 'Signature must be a string');
         throwOnTypeMismatch('function', userFn, 'Signee must be a function');
-        throwOnInvalidSignature(signature);
+
+        var tokenTree = parseSignature(signature);
+
+        throwOnInvalidSignature(tokenTree);
 
         Object.defineProperty(userFn, 'signature', {
             value: signature,
+            writeable: false
+        });
+
+        Object.defineProperty(userFn, 'signatureTree', {
+            value: tokenTree,
             writeable: false
         });
 
