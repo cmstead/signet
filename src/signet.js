@@ -35,8 +35,8 @@ var signet = (function() {
     // Predicate functions
 
     function isTypeInvalid(type) {
-        // This will expand over time to perform a richer test
-        return type === '';
+        var pattern = /(^\s*$|\s+)/g;
+        return type.match(pattern) !== null;
     }
 
     function hasNoArgs(token) {

@@ -1,6 +1,6 @@
 {
   "name": "signet",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "A function type signature library for Javascript",
   "main": "./src/signet.js",
   "scripts": {

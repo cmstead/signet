@@ -14,16 +14,17 @@ Signet will allow for single-line strings which contain all of the following:
 
 - Variable characters -- Anything which can be expressed as a valid function or variable name is acceptable in signet
 - <> -- Angle brackets for declaring type on collections like arrays and object literals
-- [] -- Brackets are meant to enclose optional values and should always come in a matched pair
+- `[]` -- Brackets are meant to enclose optional values and should always come in a matched pair
 - => -- Function output "fat-arrow" notation used for expressing output from input
 - , -- Commas are required for separating types on functions
 - () -- Optional parentheses to group types, which will be treated as spaces by interpreter
-- \s -- Spaces are allowed but not required as all types should be separated by either commas or fat arrows dependent upon case
+- Spaces are allowed but not required as all types should be separated by either commas or fat arrows dependent upon case
+spaces, however, are disallowed in type names
 
 Example function signature:
 
-"Array`<number>`, `[number]` => number"
-"() => function"
+- `"Array<number>, [number] => number"`
+- `"() => function"`
 
 ## Usage
 
