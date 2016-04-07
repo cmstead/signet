@@ -80,6 +80,10 @@ describe('signet', function () {
             assert.throws(signet.sign.bind(null, 'nu mber => number', add));
         });
         
+        it('should throw an error if all function parameters are not typed', function () {
+            assert.throws(signet.sign.bind(null, 'number => number', add));
+        });
+        
         it('should return original function', function () {
             var result = signet.sign('number, number => number', add);
             

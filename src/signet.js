@@ -57,7 +57,13 @@ var signet = (function() {
 
     function throwOnInvalidSignature(tokenTree) {
         if (!verifyTokenTree(tokenTree)) {
-            throw new Error('Invalid function signature; ensure all input and output paths are valid.');
+            throw new Error('Invalid function signature; ensure all input and output paths are valid');
+        }
+    }
+    
+    function throwOnSignatureMismatch (tokenTree, userFn){
+        if(tokenTree[0].length < userFn.length) {
+            throw new Error('All function parameters are not accounted for in type definition')
         }
     }
 
@@ -94,6 +100,7 @@ var signet = (function() {
         var tokenTree = parseSignature(signature);
 
         throwOnInvalidSignature(tokenTree);
+        throwOnSignatureMismatch(tokenTree, userFn);
 
         attachProp(userFn, 'signature', signature);
         attachProp(userFn, 'signatureTree', tokenTree);
