@@ -64,5 +64,7 @@ the list should be viewed as a planned output order.
 - [x] Set type signature string on a function with the signature property (signet.sign)
 - [x] Preliminary validation of signature string for general format (full correctness not required)
 - [x] Validation of signature string, ensuring only valid signature strings are added (parsing and interpretation)
-- [ ] Provide functionality to map types to named parameters as possible
-- [ ] Test validation of signature string, when possible, to ensure signature is fresh and valid; only basic Javascript types will be tested
+- [ ] Validate signature encompasses all values in length of function
+- [ ] Add function to verify passed arguments for all types
+- [ ] Extend argument verification function to handle optional type specs
+- [ ] Add separate module for running tests against types as unit tests, so type info can be kept fresh
