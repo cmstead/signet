@@ -17,13 +17,15 @@ Signet will allow for single-line strings which contain all of the following:
 - `[]` -- Brackets are meant to enclose optional values and should always come in a matched pair
 - => -- Function output "fat-arrow" notation used for expressing output from input
 - , -- Commas are required for separating types on functions
+- : -- Colons allow for object:instanceof annotation
 - () -- Optional parentheses to group types, which will be treated as spaces by interpreter
 - Spaces are allowed but not required as all types should be separated by either commas or fat arrows dependent upon case
 spaces, however, are disallowed in type names
 
 Example function signature:
 
-- `"Array<number>, [number] => number"`
+- `"array<number>, [number] => number"`
+- `"object:InstantiableName => string"`
 - `"() => function"`
 
 ## Usage
@@ -65,6 +67,8 @@ the list should be viewed as a planned output order.
 - [x] Preliminary validation of signature string for general format (full correctness not required)
 - [x] Validation of signature string, ensuring only valid signature strings are added (parsing and interpretation)
 - [x] Validate signature encompasses all values in length of function
+- [ ] Validate signature primary types are native Javascript types (includes custom types array and any)
 - [ ] Add function to verify passed arguments for all types
+- [ ] Add function to return argument/signature mapping as key/value pairs
 - [ ] Extend argument verification function to handle optional type specs
 - [ ] Add separate module for running tests against types as unit tests, so type info can be kept fresh
