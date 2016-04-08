@@ -1,6 +1,18 @@
 var signet = (function() {
     'use strict';
 
+    var supportedTypes = {
+        '()': true,
+        any: true,
+        array: true,
+        boolean: true,
+        function: true,
+        number: true,
+        object: true,
+        string: true,
+        symbol: true
+    };
+
     // State machine for type lexer
     var rules = [
         function initRule(key, types) {
@@ -34,9 +46,19 @@ var signet = (function() {
 
     // Predicate functions
 
-    function isTypeInvalid(type) {
-        var pattern = /(^\s*$|\s+)/g;
-        return type.match(pattern) !== null;
+    function isUnsupportedSecondaryType (typeTokens){
+        return typeTokens.length > 1 && typeTokens[0] !== 'object';
+    }
+
+    function isUnsupportedType (typeTokens){
+        var type = typeTokens[0].replace(/([\[\]]|\<[^>]*\>)/g, '');
+        return supportedTypes[type] === undefined;
+    }
+
+    function isTypeInvalid(rawType) {
+        var typeTokens = rawType.split(':');
+        
+        return isUnsupportedSecondaryType(typeTokens) || isUnsupportedType(typeTokens);
     }
 
     function hasNoArgs(token) {

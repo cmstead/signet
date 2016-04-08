@@ -7,7 +7,7 @@ describe('signet', function () {
         var add;
         
         beforeEach(function () {
-            add = function add (a, b){
+            add = function (a, b){
                 return a + b;
             }
         })
@@ -82,6 +82,26 @@ describe('signet', function () {
         
         it('should throw an error if all function parameters are not typed', function () {
             assert.throws(signet.sign.bind(null, 'number => number', add));
+        });
+        
+        it('should throw an error if any variable type names are unrecognized', function () {
+            assert.throws(signet.sign.bind(null, 'foo, number => number', add));
+        });
+        
+        it('should not throw an error if object:whatever is the type', function () {
+            assert.doesNotThrow(signet.sign.bind(null, 'object:foo, number => number', add));
+        });
+        
+        it('should throw an error if non-object data type contains a colon', function () {
+            assert.throws(signet.sign.bind(null, 'number:foo, number => number', add));
+        });
+        
+        it('should not throw an error if type is a typed array i.e. array<number>', function () {
+            assert.doesNotThrow(signet.sign.bind(null, 'array<number>, number => number', add));
+        });
+        
+        it('should not throw an error if type is optional', function () {
+            assert.doesNotThrow(signet.sign.bind(null, '[number], number => number', add));
         });
         
         it('should return original function', function () {

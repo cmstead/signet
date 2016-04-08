@@ -22,9 +22,32 @@ Signet will allow for single-line strings which contain all of the following:
 - Spaces are allowed but not required as all types should be separated by either commas or fat arrows dependent upon case
 spaces, however, are disallowed in type names
 
+**Important note about data types:**
+
+Data types are either primary or secondary. Primary types can only be from the list
+specified below, which ensures that all variables can be validated in some meaningful way. Secondary data types can be
+anything as they are not checked.
+
+Only arrays and objects can have secondary types. Arrays with secondary types are annotated as `array<typeName>`. Objects
+with secondary types are annotated as `object:typeName`. The reason for the syntactical difference is beyond the scope
+of this document. 
+
+List of supported primary types
+
+- ()
+- any
+- array
+- boolean
+- function
+- number
+- object
+- string
+- symbol
+
 Example function signature:
 
 - `"array<number>, [number] => number"`
+- `"array<foo> => string"`
 - `"object:InstantiableName => string"`
 - `"() => function"`
 
@@ -67,8 +90,23 @@ the list should be viewed as a planned output order.
 - [x] Preliminary validation of signature string for general format (full correctness not required)
 - [x] Validation of signature string, ensuring only valid signature strings are added (parsing and interpretation)
 - [x] Validate signature encompasses all values in length of function
-- [ ] Validate signature primary types are native Javascript types (includes custom types array and any)
+- [x] Validate signature primary types are native Javascript types (includes custom types array and any)
 - [ ] Add function to verify passed arguments for all types
 - [ ] Add function to return argument/signature mapping as key/value pairs
 - [ ] Extend argument verification function to handle optional type specs
 - [ ] Add separate module for running tests against types as unit tests, so type info can be kept fresh
+
+## Breaking Changes
+
+### 0.4.x
+
+- Any top-level types will now cause an error if they are not part of the core Javascript types or in the following list:
+    - ()
+    - any
+    - array
+    - boolean
+    - function
+    - number
+    - object
+    - string
+    - symbol
