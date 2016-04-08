@@ -73,6 +73,16 @@ Function decoration style:
         return a + b;
     }
 
+Example of curried function type annotation:
+
+    signet.sign('number => number => number', add);
+    
+    function curriedAdd (a) {
+        return function (b) {
+            return a + b;
+        }
+    }
+
 Signet signatures are immutable, which means once they are declared, they cannot be tampered with. This adds a guarantee
 to the stability of your in-code documentation. Let's take a look:
 
