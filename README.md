@@ -101,9 +101,9 @@ the list should be viewed as a planned output order.
 - [x] Validation of signature string, ensuring only valid signature strings are added (parsing and interpretation)
 - [x] Validate signature encompasses all values in length of function
 - [x] Validate signature primary types are native Javascript types (includes custom types array and any)
-- [ ] Add function to verify passed arguments for all types
-- [ ] Add function to return argument/signature mapping as key/value pairs
+- [x] Add function to verify passed arguments for all types
 - [ ] Extend argument verification function to handle optional type specs
+- [ ] Add function to return argument/signature mapping as key/value pairs
 - [ ] Add separate module for running tests against types as unit tests, so type info can be kept fresh
 
 ## Breaking Changes

@@ -114,6 +114,104 @@ describe('signet', function () {
             assert.equal(signet.sign.signature, 'string, function => function');
         });
         
-    });    
+    });
+    
+    describe('verify', function () {
+        
+        function buildSignedFn (signature){
+            return signet.sign(signature, function (a) {});
+        }
+                
+        it('should not throw an error if boolean argument is correctly matched', function () {
+            var testFn = buildSignedFn('boolean => any');
+            assert.doesNotThrow(signet.verify.bind(null, testFn, [true]));
+        });
+        
+        it('should throw an error if boolean argument is not matched', function () {
+            var testFn = buildSignedFn('boolean => any');
+            assert.throws(signet.verify.bind(null, testFn, ['foo']));
+        });
+        
+        it('should not throw an error if function argument is correctly matched', function () {
+            var testFn = buildSignedFn('function => any');
+            assert.doesNotThrow(signet.verify.bind(null, testFn, [testFn]));
+        });
+        
+        it('should throw an error if number function is not matched', function () {
+            var testFn = buildSignedFn('function => any');
+            assert.throws(signet.verify.bind(null, testFn, ['foo']));
+        });
+        
+        it('should not throw an error if number argument is correctly matched', function () {
+            var testFn = buildSignedFn('number => any');
+            assert.doesNotThrow(signet.verify.bind(null, testFn, [5]));
+        });
+        
+        it('should throw an error if number argument is not matched', function () {
+            var testFn = buildSignedFn('number => any');
+            assert.throws(signet.verify.bind(null, testFn, ['foo']));
+        });
+        
+        it('should not throw an error if object argument is correctly matched', function () {
+            var testFn = buildSignedFn('object => any');
+            assert.doesNotThrow(signet.verify.bind(null, testFn, [{}]));
+        });
+        
+        it('should throw an error if object argument is not matched', function () {
+            var testFn = buildSignedFn('object => any');
+            assert.throws(signet.verify.bind(null, testFn, ['foo']));
+        });
+        
+        it('should not throw an error if string argument is correctly matched', function () {
+            var testFn = buildSignedFn('string => any');
+            assert.doesNotThrow(signet.verify.bind(null, testFn, ['pass']));
+        });
+        
+        it('should throw an error if string argument is not matched', function () {
+            var testFn = buildSignedFn('string => any');
+            assert.throws(signet.verify.bind(null, testFn, [987]));
+        });
+        
+        it('should not throw an error if symbol argument is correctly matched', function () {
+            var testFn = buildSignedFn('symbol => any');
+            assert.doesNotThrow(signet.verify.bind(null, testFn, [Symbol('foo')]));
+        });
+        
+        it('should throw an error if symbol argument is not matched', function () {
+            var testFn = buildSignedFn('symbol => any');
+            assert.throws(signet.verify.bind(null, testFn, [987]));
+        });
+        
+        it('should not throw an error if undefined argument is correctly matched', function () {
+            var testFn = buildSignedFn('undefined => any');
+            assert.doesNotThrow(signet.verify.bind(null, testFn, []));
+        });
+        
+        it('should throw an error if undefined argument is not matched', function () {
+            var testFn = buildSignedFn('undefined => any');
+            assert.throws(signet.verify.bind(null, testFn, [987]));
+        });
+        
+        it('should not throw an error if array argument is correctly matched', function () {
+            var testFn = buildSignedFn('array => any');
+            assert.doesNotThrow(signet.verify.bind(null, testFn, [[]]));
+        });
+        
+        it('should throw an error if array argument is not matched', function () {
+            var testFn = buildSignedFn('array => any');
+            assert.throws(signet.verify.bind(null, testFn, [987]));
+        });
+        
+        it('should throw an error if second value is a type mismatch', function () {
+            var testFn = buildSignedFn('number, string => any');
+            assert.throws(signet.verify.bind(null, testFn, [5, 5]));
+        });
+        
+        it('should throw an error if later values are mismatched', function () {
+            var testFn = buildSignedFn('number, any, string => any');
+            assert.throws(signet.verify.bind(null, testFn, [5, 'foo', 5]));
+        });
+        
+    });
     
 });
