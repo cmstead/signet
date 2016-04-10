@@ -212,6 +212,21 @@ describe('signet', function () {
             assert.throws(signet.verify.bind(null, testFn, [5, 'foo', 5]));
         });
         
+        it('should not throw an error if array has a secondary type', function () {
+            var testFn = buildSignedFn('array<secondary> => number');
+            assert.doesNotThrow(signet.verify.bind(null, testFn, [[]]));
+        });
+        
+        it('should not throw an error if object has a secondary type', function () {
+            var testFn = buildSignedFn('object:secondary => number');
+            assert.doesNotThrow(signet.verify.bind(null, testFn, [{}]));
+        });
+        
+        it('should not throw an error if optional argument is not satisfied', function () {
+            var testFn = buildSignedFn('[number], string => number');
+            assert.doesNotThrow(signet.verify.bind(null, testFn, ['foo']));
+        });
+        
     });
     
 });

@@ -27,7 +27,7 @@ var signet = (function() {
     }
 
     // State machine for type lexer
-    var rules = [
+    var lexRules = [
         function initRule(key, types) {
             return types.length > 1 ? 'init' : key;
         },
@@ -45,16 +45,44 @@ var signet = (function() {
         }
     ];
 
-    var states = {
-        init: rules,
-        accept: rules,
+    var lexStates = {
+        init: lexRules,
+        accept: lexRules,
         fail: [] // Always fails
     }
 
-    function updateState(stateKey, value) {
+    function isOptional(type) {
+        return type.match(/\[[^\]]+\]/) !== null;
+    }
+
+    var verifyRules = [
+        function skip(key, type) {
+            return isOptional(type) ? 'skip' : 'accept';
+        },
+
+        function failRule(key, type, value) {
+            return key !== 'skip' && !isTypeMatch(type, value) ? 'fail' : key;
+        }
+    ];
+
+    var verificationStates = {
+        skip: verifyRules,
+        accept: verifyRules,
+        fail: []
+    };
+
+    function updateState(states, stateKey, type, value) {
         return states[stateKey].reduce(function(key, rule) {
-            return rule(key, value);
+            return rule(key, type, value);
         }, stateKey);
+    }
+
+    function updateLexState(stateKey, value) {
+        return updateState(lexStates, stateKey, value);
+    }
+
+    function updateVerificationState(stateKey, type, value) {
+        return updateState(verificationStates, stateKey, type, value);
     }
 
     // Predicate functions
@@ -74,12 +102,18 @@ var signet = (function() {
         return isUnsupportedSecondaryType(typeTokens) || isUnsupportedType(typeTokens);
     }
 
+    function isTypeMatch(rawType, value) {
+        var type = rawType.replace(/(\<[^\>]*\>|\:.*$|[\[\]])/g, '');
+
+        return supportedTypes[type](value);
+    }
+
     function hasNoArgs(token) {
         return token.match(/^\(\s*\)$/) !== null;
     }
 
     function verifyTokenTree(tokenTree) {
-        return tokenTree.length > 1 && tokenTree.reduce(updateState, 'init') === 'accept';
+        return tokenTree.length > 1 && tokenTree.reduce(updateLexState, 'init') === 'accept';
     }
 
     // Throw on error functions
@@ -99,6 +133,14 @@ var signet = (function() {
     function throwOnSignatureMismatch(tokenTree, userFn) {
         if (tokenTree[0].length < userFn.length) {
             throw new Error('All function parameters are not accounted for in type definition')
+        }
+    }
+
+    function throwOnArgTypeMismatch(args, type, index) {
+        var value = args[index];
+
+        if (!isTypeMatch(type, value)) {
+            throw new TypeError('Expected value of type ' + type + ' to be ' + typeof value);
         }
     }
 
@@ -143,14 +185,34 @@ var signet = (function() {
         return userFn;
     }
 
-    function throwOnArgTypeMismatch(args, type, index) {
-        if (!supportedTypes[type](args[index])) {
-            throw new TypeError('Expected value of type ' + type + ' to be ' + typeof value);
-        }
+    function verificationComplete (inputSignature, args){
+        return inputSignature.length === 0 || args.length === 0;
     }
-    
+
+    function nextVerificationStep (inputSignature, args, state){
+        var nextSignature = inputSignature.slice(1);
+        var nextArgs = state === 'skip' ? args : args.slice(1);
+        
+        // TODO: Throw error immediately if fail state comes through
+        
+        return !verificationComplete(nextSignature, nextArgs) ?
+                    verifyOnState(nextSignature, nextArgs, state) :
+                    state;
+    }
+
+    function verifyOnState(inputSignature, args, inState) {
+        var state = typeof inState === 'undefined' ? 'accept' : inState;
+        var outState = updateVerificationState(state, inputSignature[0], args[0]);
+        
+        return nextVerificationStep(inputSignature, args, outState);
+    }
+
     function verify(signedFn, args) {
-        signedFn.signatureTree[0].forEach(throwOnArgTypeMismatch.bind(null, args));
+        var finalState = verifyOnState(signedFn.signatureTree[0], args);
+        
+        if(finalState !== 'accept') {
+            throw new TypeError('Optional types were not fulfilled properly');
+        }
     }
 
     var signet = {
