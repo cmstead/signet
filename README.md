@@ -91,6 +91,16 @@ to the stability of your in-code documentation. Let's take a look:
     add.signature = 'I am trying to change the signature property';
     console.log(add.signature); // number, number => number
 
+Arguments can be verified against the function signature by calling verify inside your function:
+
+    function verifiedAdd (a, b) {
+        signet.verify(add, arguments);
+        
+        return a + b;
+    }
+    
+    signet.sign('number, number => number', verifiedAdd);
+
 ## Development
 
 Signet development will proceed following the checklist below.  The intent is to deliver useful behavior at each step, so
