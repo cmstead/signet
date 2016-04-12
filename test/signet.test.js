@@ -227,6 +227,11 @@ describe('signet', function () {
             assert.doesNotThrow(signet.verify.bind(null, testFn, ['foo']));
         });
         
+        it('should throw an error if optional argument is not satisfied and extra values are left', function () {
+            var testFn = buildSignedFn('[number], string, [number] => number');
+            assert.throws(signet.verify.bind(null, testFn, ['foo', 'bar']));
+        });
+        
     });
     
 });

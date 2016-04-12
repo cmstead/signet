@@ -109,7 +109,7 @@ var signet = (function() {
     }
 
     function hasNoArgs(token) {
-        return token.match(/^\(\s*\)$/) !== null;
+        return token.match(/^\(\)$/) !== null;
     }
 
     function verifyTokenTree(tokenTree) {
@@ -136,11 +136,9 @@ var signet = (function() {
         }
     }
 
-    function throwOnArgTypeMismatch(args, type, index) {
-        var value = args[index];
-
-        if (!isTypeMatch(type, value)) {
-            throw new TypeError('Expected value of type ' + type + ' to be ' + typeof value);
+    function throwOnInvalidTypeState(statePattern, state, message) {
+        if (state.match(statePattern) !== null) {
+            throw new TypeError(message);
         }
     }
 
@@ -185,34 +183,34 @@ var signet = (function() {
         return userFn;
     }
 
-    function verificationComplete (inputSignature, args){
+    function verificationComplete(inputSignature, args) {
         return inputSignature.length === 0 || args.length === 0;
     }
 
-    function nextVerificationStep (inputSignature, args, state){
+    function nextVerificationStep(inputSignature, args, state) {
         var nextSignature = inputSignature.slice(1);
         var nextArgs = state === 'skip' ? args : args.slice(1);
         
-        // TODO: Throw error immediately if fail state comes through
-        
-        return !verificationComplete(nextSignature, nextArgs) ?
-                    verifyOnState(nextSignature, nextArgs, state) :
-                    state;
+        var errorMessage = 'Expected type ' + inputSignature[0] + ' but got ' + typeof args[0];
+        var complete = verificationComplete(nextSignature, nextArgs);
+
+        throwOnInvalidTypeState(/^fail$/, state, errorMessage);
+
+        return complete ? state : verifyOnState(nextSignature, nextArgs, state);
     }
 
     function verifyOnState(inputSignature, args, inState) {
         var state = typeof inState === 'undefined' ? 'accept' : inState;
         var outState = updateVerificationState(state, inputSignature[0], args[0]);
-        
+
         return nextVerificationStep(inputSignature, args, outState);
     }
 
     function verify(signedFn, args) {
-        var finalState = verifyOnState(signedFn.signatureTree[0], args);
+        var errorMessage = 'Optional types were not fulfilled properly';
+        var finalState = verifyOnState(signedFn.signatureTree[0], Array.prototype.slice.call(args, 0));
         
-        if(finalState !== 'accept') {
-            throw new TypeError('Optional types were not fulfilled properly');
-        }
+        throwOnInvalidTypeState(/^(fail|skip)$/, finalState, errorMessage);
     }
 
     var signet = {
