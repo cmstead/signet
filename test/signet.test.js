@@ -237,70 +237,68 @@ describe('signet', function() {
     describe('enforce', function() {
 
         var add;
+        var signature;
 
         beforeEach(function() {
             add = function add(a, b) {
                 return a + b;
             }
+            
+            signature = 'number, number => number';
         });
 
         it('should return a function', function() {
-            signet.sign('number, number => number', add);
-            assert.equal(typeof signet.enforce(add), 'function');
+            assert.equal(typeof signet.enforce(signature, add), 'function');
         });
 
         it('should return a function which throws an error if contract is not fulfilled', function() {
-            signet.sign('number, number => number', add);
-            assert.throws(signet.enforce(add).bind(null, 5, 'foo'));
+            assert.throws(signet.enforce(signature, add).bind(null, 5, 'foo'));
         });
 
         it('should return a function which throws an error only if contract is not fulfilled', function() {
-            signet.sign('number, number => number', add);
-            assert.doesNotThrow(signet.enforce(add).bind(null, 5, 5));
+            assert.doesNotThrow(signet.enforce(signature, add).bind(null, 5, 5));
         });
 
         it('should return a function which returns correct result on execution', function() {
-            signet.sign('number, number => number', add);
-            assert.equal(signet.enforce(add)(5, 5), 10);
+            assert.equal(signet.enforce(signature, add)(5, 5), 10);
         });
 
         it('should return a function with correct signature', function() {
-            signet.sign('number, number => number', add);
-            assert.equal(signet.enforce(add).signature, add.signature);
+            assert.equal(signet.enforce(signature, add).signature, add.signature);
         });
 
         it('should return a function with correct signature tree', function() {
-            signet.sign('number, number => number', add);
-            assert.equal(signet.enforce(add).signatureTree, add.signatureTree);
+            assert.equal(signet.enforce(signature, add).signatureTree, add.signatureTree);
         });
 
         it('should return a function with the correct argument length', function() {
-            signet.sign('number, number => number', add);
-            assert.equal(signet.enforce(add).length, add.length);
+            assert.equal(signet.enforce(signature, add).length, add.length);
         });
 
         it('should return a function with toString which returns string version of original fn', function() {
-            signet.sign('number, number => number', add);
-            assert.equal(signet.enforce(add).toString(), add.toString());
+            assert.equal(signet.enforce(signature, add).toString(), add.toString());
         });
 
-    });
-
-    describe('signAndEnforce', function() {
-        var add;
-
-        beforeEach(function() {
-            add = function add(a, b) {
-                return a + b;
-            }
+        it('should enforce curried functions', function () {
+            var curriedAdd = signet.enforce('number => number => number', 
+                function curriedAdd (a){
+                    return function (b) {
+                        return a + b;
+                    }
+                });
+            
+            assert.throws(curriedAdd(1).bind(null, 'foo'));
         });
 
-        it('should sign and enforce passed function and throw on bad call', function() {
-            assert.throws(signet.signAndEnforce('number, number => number', add).bind(null, 5, 'foo'));
-        });
-
-        it('should sign and enforce passed function and behave normally on good call', function() {
-            assert.equal(signet.signAndEnforce('number, number => number', add)(5, 5), 10);
+        it('should enforce curried functions and resolve on success', function () {
+            var curriedAdd = signet.enforce('number => string => number', 
+                function curriedAdd (a){
+                    return function (b) {
+                        return a + b;
+                    }
+                });
+            
+            assert.doesNotThrow(curriedAdd(1).bind(null, 'foo'));
         });
 
     });

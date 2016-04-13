@@ -104,6 +104,26 @@ Arguments can be verified against the function signature by calling verify insid
     }
     
     signet.sign('number, number => number', verifiedAdd);
+    
+Functions can be signed and verified all in one call with the enforce function:
+
+    function add (a, b) {
+        return a + b;
+    }
+    
+    const enforcedAdd = enforce('number, number => number', add);
+
+Curried functions are also fully enforced all the way down:
+
+    function curriedAdd (a) {
+        return function (b) {
+            return a + b;
+        }
+    }
+    
+    const enforcedCurriedAdd = enforce('number => number => number', curriedAdd);
+    
+    enforcedCurriedAdd(1)('foo'); // Throws -- Expected type number, but got string
 
 ## Development
 
