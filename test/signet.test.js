@@ -234,4 +234,51 @@ describe('signet', function () {
         
     });
     
+    describe('enforce', function () {
+        
+        var add;
+        
+        beforeEach(function () {
+            add = function add (a, b) {
+                return a + b;
+            }
+        });
+        
+        it('should return a function', function () {
+            signet.sign('number, number => number', add);
+            assert.equal(typeof signet.enforce(add), 'function');
+        });
+        
+        it('should return a function which throws an error if contract is not fulfilled', function () {
+            signet.sign('number, number => number', add);
+            assert.throws(signet.enforce(add).bind(null, 5, 'foo'));
+        });        
+
+        it('should return a function which throws an error only if contract is not fulfilled', function () {
+            signet.sign('number, number => number', add);
+            assert.doesNotThrow(signet.enforce(add).bind(null, 5, 5));
+        });        
+
+        it('should return a function which returns correct result on execution', function () {
+            signet.sign('number, number => number', add);
+            assert.equal(signet.enforce(add)(5, 5), 10);
+        });        
+
+        it('should return a function with correct signature', function () {
+            signet.sign('number, number => number', add);
+            assert.equal(signet.enforce(add).signature, add.signature);
+        });
+        
+        it('should return a function with correct signature tree', function () {
+            signet.sign('number, number => number', add);
+            assert.equal(signet.enforce(add).signatureTree, add.signatureTree);
+        });
+        
+        it('should return a function with the correct argument length', function () {
+            signet.sign('number, number => number', add);
+            assert.equal(signet.enforce(add).length, add.length);
+        });
+        
+    });
+    
 });

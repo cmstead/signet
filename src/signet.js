@@ -190,7 +190,7 @@ var signet = (function() {
     function nextVerificationStep(inputSignature, args, state) {
         var nextSignature = inputSignature.slice(1);
         var nextArgs = state === 'skip' ? args : args.slice(1);
-        
+
         var errorMessage = 'Expected type ' + inputSignature[0] + ' but got ' + typeof args[0];
         var complete = verificationComplete(nextSignature, nextArgs);
 
@@ -209,13 +209,42 @@ var signet = (function() {
     function verify(signedFn, args) {
         var errorMessage = 'Optional types were not fulfilled properly';
         var finalState = verifyOnState(signedFn.signatureTree[0], Array.prototype.slice.call(args, 0));
-        
+
         throwOnInvalidTypeState(/^(fail|skip)$/, finalState, errorMessage);
+    }
+
+    function buildWrapperArgs(signedFn, initialArgs) {
+        var args = typeof initialArgs !== 'undefined' ? initialArgs : [];
+        var done = signedFn.length <= args.length;
+        var varName = 'x' + args.length;
+
+        return done ? args.join(',') : buildWrapperArgs(signedFn, args.concat([varName]));
+    }
+
+    function buildEnforceWrapper(signedFn) {
+        var wrapperTemplate = 'return function enforceWrapper (' + buildWrapperArgs(signedFn) + ') {' +
+            'verify(signedFn, arguments);' +
+            'return signedFn.apply(null, Array.prototype.slice.call(arguments, 0));' +
+            '};';
+
+        var wrapperFactory = new Function(['signedFn', 'verify'], wrapperTemplate);
+
+        return wrapperFactory(signedFn, verify);
+    }
+
+    function enforce(signedFn) {
+        var enforceWrapper = buildEnforceWrapper(signedFn);
+
+        attachProp(enforceWrapper, 'signature', signedFn.signature);
+        attachProp(enforceWrapper, 'signatureTree', signedFn.signatureTree);
+
+        return enforceWrapper;
     }
 
     var signet = {
         sign: sign('string, function => function', sign),
-        verify: sign('function, object => undefined', verify)
+        verify: sign('function, object => undefined', verify),
+        enforce: sign('function => function', enforce)
     };
 
     if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
