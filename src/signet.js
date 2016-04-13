@@ -237,14 +237,22 @@ var signet = (function() {
 
         attachProp(enforceWrapper, 'signature', signedFn.signature);
         attachProp(enforceWrapper, 'signatureTree', signedFn.signatureTree);
+        attachProp(enforceWrapper, 'toString', function () {
+            return signedFn.toString();
+        });
 
         return enforceWrapper;
     }
 
+    function signAndEnforce (signature, userFn){
+        return enforce(sign(signature, userFn));
+    }
+
     var signet = {
+        enforce: sign('function => function', enforce),
         sign: sign('string, function => function', sign),
-        verify: sign('function, object => undefined', verify),
-        enforce: sign('function => function', enforce)
+        signAndEnforce: sign('string, function => function', signAndEnforce),
+        verify: sign('function, object => undefined', verify)
     };
 
     if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {

@@ -118,7 +118,7 @@ the list should be viewed as a planned output order.
     - [x] Validate signature primary types are native Javascript types (includes custom types array and any)
     - [x] Add function to verify passed arguments for all types
     - [x] Extend argument verification function to handle optional type specs
-    - [ ] Add enforce and signAndEnforce functions
+    - [x] Add enforce and signAndEnforce functions
     - [ ] Add deepSign function for signing returned functions
     - [ ] Update AST to reflect rich types including object subtypes, array value types and optional types
 
