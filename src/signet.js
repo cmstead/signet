@@ -146,17 +146,35 @@ var signet = (function() {
     // Utility functions
 
     function stripParens(token) {
-        return hasNoArgs(token) ? token : token.replace(/[()]/g, '');
+        return hasNoArgs(token) ? token.replace(/\s*/g, '') : token.replace(/[()]/g, '');
     }
 
-    function stripParensAndSplit(rawToken) {
-        return stripParens(rawToken.trim()).split(/\s*\,\s*/g);
+    function buildTypeObj (token){
+        var splitType = token.split(/\s*(\<|\:)\s*/);
+        var subType = splitType[1];
+        
+        return {
+            type: splitType.shift().replace(/[\[\]]/g, ''),
+            subType: subType ? subType.replace(/[\<\>]/g, '') : subType,
+            optional: token.match(/\[[^\]]+\]/) !== null
+        };
+    }
+
+    function buildFunctionTree(rawToken) {
+        var typeTokens = stripParens(rawToken.trim())
+            .split(/\s*\,\s*/g);
+            
+        var typeTree = typeTokens.map(buildTypeObj);
+
+        console.log(typeTree);
+
+        return typeTokens;
     }
 
     function parseSignature(signature) {
         return signature
             .split(/\s*\=\>\s*/g)
-            .map(stripParensAndSplit);
+            .map(buildFunctionTree);
     }
 
     function attachProp(userFn, propName, value) {
