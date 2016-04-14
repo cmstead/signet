@@ -2,30 +2,27 @@ var signet = (function() {
     'use strict';
 
     var supportedTypes = {
-        '()': alwaysTrue,
-        any: alwaysTrue,
-        array: isInstanceOf.bind(null, Array),
-        boolean: isType.bind(null, 'boolean'),
-        function: isType.bind(null, 'function'),
-        number: isType.bind(null, 'number'),
-        object: isType.bind(null, 'object'),
-        string: isType.bind(null, 'string'),
-        symbol: isType.bind(null, 'symbol'),
-        undefined: isType.bind(null, 'undefined')
+        '()': isType('string'),
+        any: isType('string'),
+        array: isInstanceOf(Array),
+        boolean: isType('boolean'),
+        function: isType('function'),
+        number: isType('number'),
+        object: isType('object'),
+        string: isType('string'),
+        symbol: isType('symbol'),
+        undefined: isType('undefined')
     };
 
     // State machine for type lexer
     var lexRules = [
         function initRule(key, types) {
-            return types.length > 1 ? 'init' : key;
-        },
-
-        function acceptRule(key, types) {
-            return types.length === 1 ? 'accept' : key;
+            return types.length === 1 ? 'accept' : 'init';
         },
 
         function failRule(key, types) {
-            return types.length === 0 || hasInvalidTypes(types) ? 'fail' : key;
+            var badTypes = types.filter(isTypeInvalid);
+            return types.length === 0 || badTypes.length > 0 ? 'fail' : key;
         }
 
     ];
@@ -38,11 +35,11 @@ var signet = (function() {
 
     var verifyRules = [
         function skip(key, type) {
-            return isOptional(type) ? 'skip' : 'accept';
+            return type.optional ? 'skip' : 'accept';
         },
 
-        function failRule(key, type, value) {
-            return key !== 'skip' && !isTypeMatch(type, value) ? 'fail' : key;
+        function failRule(key, typeObj, value) {
+            return key !== 'skip' && !supportedTypes[typeObj.type](value) ? 'fail' : key;
         }
     ];
 
@@ -58,63 +55,32 @@ var signet = (function() {
         }, stateKey);
     }
 
-    function updateLexState(stateKey, value) {
-        return updateState(lexStates, stateKey, value);
-    }
-
-    function updateVerificationState(stateKey, type, value) {
-        return updateState(verificationStates, stateKey, type, value);
-    }
+    var updateLexState = updateState.bind(null, lexStates);
+    var updateVerificationState = updateState.bind(null, verificationStates);
 
     // Predicate functions
 
-    function isOptional(type) {
-        return type.match(/\[[^\]]+\]/) !== null;
+    function isType(type) {
+        return function(value) {
+            return type === typeof value;
+        }
     }
 
-    function alwaysTrue() {
-        return true;
-    }
-
-    function isType(type, value) {
-        return type === typeof value;
-    }
-
-    function isInstanceOf(obj, value) {
-        return value instanceof obj;
-    }
-
-    function hasInvalidTypes(types) {
-        return types.filter(isTypeInvalid).length > 0;
-    }
-
-    function isUnsupportedSubtype(typeTokens) {
-        return typeTokens.length > 1 && typeTokens[0] !== 'object';
-    }
-
-    function isUnsupportedType(typeTokens) {
-        var type = typeTokens[0].replace(/([\[\]]|\<[^>]*\>)/g, '');
-        return supportedTypes[type] === undefined;
-    }
-
-    function isTypeInvalid(rawType) {
-        var typeTokens = rawType.split(':');
-
-        return isUnsupportedSubtype(typeTokens) || isUnsupportedType(typeTokens);
-    }
-
-    function isTypeMatch(rawType, value) {
-        var type = rawType.replace(/(\<[^\>]*\>|\:.*$|[\[\]])/g, '');
-
-        return supportedTypes[type](value);
+    function isInstanceOf(obj) {
+        return function(value) {
+            return value instanceof obj;
+        }
     }
 
     function hasNoArgs(token) {
         return token.match(/^\(\)$/) !== null;
     }
 
-    function verifyTokenTree(tokenTree) {
-        return tokenTree.length > 1 && tokenTree.reduce(updateLexState, 'init') === 'accept';
+    function isTypeInvalid(typeObj) {
+        var unsupportedType = !isType('function')(supportedTypes[typeObj.type]);
+        var unsupportedSubtype = isType('string')(typeObj.subType) && typeObj.type !== 'object';
+
+        return unsupportedType || unsupportedSubtype;
     }
 
     // Throw on error functions
@@ -125,20 +91,22 @@ var signet = (function() {
         }
     }
 
-    function throwOnInvalidSignature(tokenTree) {
-        if (!verifyTokenTree(tokenTree)) {
-            throw new Error('Invalid function signature; ensure all input and output paths are valid');
+    function throwOnInvalidSignature(tokenTree, userFn) {
+        var shortTokenTree = tokenTree <= 1;
+        var typesOkay = tokenTree.reduce(updateLexState, 'init') === 'accept';
+        var lengthOkay = tokenTree[0].length >= userFn.length;
+
+        var message = !lengthOkay ?
+            'All function parameters are not accounted for in type definition' :
+            'Invalid function signature; ensure all input and output paths are valid';
+
+        if (!lengthOkay || shortTokenTree || !typesOkay) {
+            throw new Error(message);
         }
     }
 
-    function throwOnSignatureMismatch(tokenTree, userFn) {
-        if (tokenTree[0].length < userFn.length) {
-            throw new Error('All function parameters are not accounted for in type definition')
-        }
-    }
-
-    function throwOnInvalidTypeState(statePattern, state, message) {
-        if (state.match(statePattern) !== null) {
+    function throwOnTypeState(failState, state, message) {
+        if (state === failState) {
             throw new TypeError(message);
         }
     }
@@ -149,32 +117,32 @@ var signet = (function() {
         return hasNoArgs(token) ? token.replace(/\s*/g, '') : token.replace(/[()]/g, '');
     }
 
-    function buildTypeObj (token){
+    function buildTypeObj(token) {
         var splitType = token.split(/\s*(\<|\:)\s*/);
-        var subType = splitType[1];
-        
+        var type = splitType[0].replace(/[\[\]]/g, '');
+        var secondaryType = splitType.length > 1 ? splitType.pop() : undefined;
+        var isValueType = isType('string')(secondaryType) && secondaryType.match(/^[^\>]+\>/g) !== null;
+
         return {
-            type: splitType.shift().replace(/[\[\]]/g, ''),
-            subType: subType ? subType.replace(/[\<\>]/g, '') : subType,
+            type: type,
+            subType: !isValueType ? secondaryType : undefined,
+            valueType: isValueType ? secondaryType.replace('>', '') : undefined,
             optional: token.match(/\[[^\]]+\]/) !== null
         };
     }
 
-    function buildFunctionTree(rawToken) {
-        var typeTokens = stripParens(rawToken.trim())
-            .split(/\s*\,\s*/g);
-            
-        var typeTree = typeTokens.map(buildTypeObj);
+    function splitSignature(signature) {
+        return signature.split(/\s*\=\>\s*/g);
+    }
 
-        console.log(typeTree);
-
-        return typeTokens;
+    function buildTypeTree(rawToken) {
+        return stripParens(rawToken.trim())
+            .split(/\s*\,\s*/g)
+            .map(buildTypeObj);
     }
 
     function parseSignature(signature) {
-        return signature
-            .split(/\s*\=\>\s*/g)
-            .map(buildFunctionTree);
+        return splitSignature(signature).map(buildTypeTree);
     }
 
     function attachProp(userFn, propName, value) {
@@ -184,37 +152,33 @@ var signet = (function() {
         });
     }
 
-    // Core functionality
-
     function attachSignatureData(userFn, signature, tokenTree) {
         if (tokenTree.length > 1) {
             attachProp(userFn, 'signature', signature);
             attachProp(userFn, 'signatureTree', tokenTree);
         }
-    }
-
-    function sign(signature, userFn) {
-        throwOnTypeMismatch('string', signature, 'Signature must be a string');
-        throwOnTypeMismatch('function', userFn, 'Signee must be a function');
-
-        var tokenTree = parseSignature(signature);
-
-        throwOnInvalidSignature(tokenTree);
-        throwOnSignatureMismatch(tokenTree, userFn);
-
-        attachSignatureData(userFn, signature, tokenTree);
 
         return userFn;
     }
 
+    // Core functionality
+
+    function sign(signature, userFn) {
+        var tokenTree = parseSignature(signature);
+
+        throwOnInvalidSignature(tokenTree, userFn);
+
+        return attachSignatureData(userFn, signature, tokenTree);
+    }
+
     function nextVerificationStep(inputSignature, args, state) {
+        var errorMessage = 'Expected type ' + inputSignature[0].type + ' but got ' + typeof args[0];
+
         var nextSignature = inputSignature.slice(1);
         var nextArgs = state === 'skip' ? args : args.slice(1);
-
         var complete = nextSignature.length === 0 || nextArgs.length === 0;
 
-        var errorMessage = 'Expected type ' + inputSignature[0] + ' but got ' + typeof args[0];
-        throwOnInvalidTypeState(/^fail$/, state, errorMessage);
+        throwOnTypeState('fail', state, errorMessage);
 
         return complete ? state : verifyOnState(nextSignature, nextArgs, state);
     }
@@ -227,10 +191,9 @@ var signet = (function() {
     }
 
     function verify(signedFn, args) {
-        var errorMessage = 'Optional types were not fulfilled properly';
         var finalState = verifyOnState(signedFn.signatureTree[0], Array.prototype.slice.call(args, 0));
 
-        throwOnInvalidTypeState(/^(fail|skip)$/, finalState, errorMessage);
+        throwOnTypeState('skip', finalState, 'Optional types were not fulfilled properly');
     }
 
     function buildWrapperArgs(signedFn, args) {
@@ -239,29 +202,25 @@ var signet = (function() {
         return !done ? buildWrapperArgs(signedFn, args.concat(['x' + args.length])) : args.join(',');
     }
 
-    function enforceNext(lastFn, result) {
-        var signatureTokens = lastFn.signature.split(/\s*\=\>\s*/g).slice(1);
-        var tokenTree = lastFn.signatureTree.slice(1);
-
-        attachSignatureData(result, signatureTokens.join(' => '), tokenTree);
-
-        return signatureTokens.length > 1 ? enforce(result) : result;
-    }
-
-    function callAndSign(signedFn, args) {
+    function callAndEnforce(signedFn, args) {
         var result = signedFn.apply(null, args);
-        return enforceNext(signedFn, result);
+        var signature = splitSignature(signedFn.signature).slice(1).join(' => ');
+        var tokenTree = signedFn.signatureTree.slice(1);
+
+        attachSignatureData(result, signature, tokenTree);
+
+        return tokenTree.length > 1 ? enforce(result) : result;
     }
 
     function buildEnforceWrapper(signedFn) {
         var wrapperTemplate = 'return function enforceWrapper (' + buildWrapperArgs(signedFn, []) + ') {' +
             'verify(signedFn, arguments);' +
-            'return callAndSign(signedFn, Array.prototype.slice.call(arguments));' +
+            'return callAndEnforce(signedFn, Array.prototype.slice.call(arguments));' +
             '};';
 
-        var wrapperFn = new Function(['signedFn', 'verify', 'callAndSign'], wrapperTemplate);
+        var wrapperFn = new Function(['signedFn', 'verify', 'callAndEnforce'], wrapperTemplate);
 
-        return wrapperFn(signedFn, verify, callAndSign);
+        return wrapperFn(signedFn, verify, callAndEnforce);
     }
 
     function enforce(signedFn) {
@@ -279,9 +238,8 @@ var signet = (function() {
     }
 
     var signet = {
-        sign: sign('string, function => function', sign),
-        
         enforce: signAndEnforce('string, function => function', signAndEnforce),
+        sign: signAndEnforce('string, function => function', sign),
         verify: signAndEnforce('function, object => undefined', verify)
     };
 

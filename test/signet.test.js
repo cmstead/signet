@@ -27,21 +27,21 @@ describe('signet', function() {
         });
 
         it('should add a signature AST to passed function', function() {
-            var expected = [['number', 'number'], ['number']];
+            var expected = '[[{"type":"number","optional":false},{"type":"number","optional":false}],[{"type":"number","optional":false}]]';
 
             signet.sign('number, number => number', add);
 
-            assert.equal(add.signatureTree.toString(), expected.toString());
+            assert.equal(JSON.stringify(add.signatureTree), expected);
         });
 
         it('should make signatureTree property immutable', function() {
-            var expected = [['number', 'number'], ['number']];
+            var expected = '[[{"type":"number","optional":false},{"type":"number","optional":false}],[{"type":"number","optional":false}]]';
 
             signet.sign('number, number => number', add);
 
             add.signatureTree = [];
 
-            assert.equal(add.signatureTree.toString(), expected.toString());
+            assert.equal(JSON.stringify(add.signatureTree), expected);
         });
 
         it('should throw an error if signature is not a string', function() {
