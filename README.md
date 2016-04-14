@@ -140,6 +140,7 @@ the list should be viewed as a planned output order.
     - [x] Extend argument verification function to handle optional type specs
     - [x] Add enforce functions
     - [x] Update AST to reflect rich types including object subtypes, array value types and optional types
+    - [ ] Add build step to integrate minification for browsers
 
 - Test and development module
     - [ ] Function to run tests against types as property tests, so type info can be kept fresh
