@@ -1,4 +1,4 @@
-var signet = (function() {
+var signet = (function () {
     'use strict';
 
     var supportedTypes = {
@@ -50,7 +50,7 @@ var signet = (function() {
     };
 
     function updateState(states, stateKey, type, value) {
-        return states[stateKey].reduce(function(key, rule) {
+        return states[stateKey].reduce(function (key, rule) {
             return rule(key, type, value);
         }, stateKey);
     }
@@ -61,19 +61,21 @@ var signet = (function() {
     // Predicate functions
 
     function isType(type) {
-        return function(value) {
+        return function (value) {
             return type === typeof value;
         }
     }
 
     function isInstanceOf(obj) {
-        return function(value) {
+        return function (value) {
             return value instanceof obj;
         }
     }
 
-    function hasNoArgs(token) {
-        return token.match(/^\(\)$/) !== null;
+    function matches(pattern) {
+        return function (value) {
+            return value.match(pattern) !== null;
+        }
     }
 
     function isTypeInvalid(typeObj) {
@@ -114,20 +116,20 @@ var signet = (function() {
     // Utility functions
 
     function stripParens(token) {
-        return hasNoArgs(token) ? token.replace(/\s*/g, '') : token.replace(/[()]/g, '');
+        return matches(/^\(\)$/)(token) ? token.replace(/\s*/g, '') : token.replace(/[()]/g, '');
     }
 
     function buildTypeObj(token) {
         var splitType = token.split(/\s*(\<|\:)\s*/);
         var type = splitType[0].replace(/[\[\]]/g, '');
         var secondaryType = splitType.length > 1 ? splitType.pop() : undefined;
-        var isValueType = isType('string')(secondaryType) && secondaryType.match(/^[^\>]+\>/g) !== null;
+        var isValueType = isType('string')(secondaryType) && matches(/^[^\>]+\>/g)(secondaryType);
 
         return {
             type: type,
             subType: !isValueType ? secondaryType : undefined,
             valueType: isValueType ? secondaryType.replace('>', '') : undefined,
-            optional: token.match(/\[[^\]]+\]/) !== null
+            optional: matches(/\[[^\]]+\]/)(token)
         };
     }
 
@@ -139,10 +141,6 @@ var signet = (function() {
         return stripParens(rawToken.trim())
             .split(/\s*\,\s*/g)
             .map(buildTypeObj);
-    }
-
-    function parseSignature(signature) {
-        return splitSignature(signature).map(buildTypeTree);
     }
 
     function attachProp(userFn, propName, value) {
@@ -164,7 +162,7 @@ var signet = (function() {
     // Core functionality
 
     function sign(signature, userFn) {
-        var tokenTree = parseSignature(signature);
+        var tokenTree = splitSignature(signature).map(buildTypeTree);
 
         throwOnInvalidSignature(tokenTree, userFn);
 
@@ -184,7 +182,7 @@ var signet = (function() {
     }
 
     function verifyOnState(inputSignature, args, inState) {
-        var state = typeof inState === 'undefined' ? 'accept' : inState;
+        var state = isType('undefined')(inState) ? 'accept' : inState;
         var outState = updateVerificationState(state, inputSignature[0], args[0]);
 
         return nextVerificationStep(inputSignature, args, outState);
@@ -233,7 +231,7 @@ var signet = (function() {
         return enforceWrapper;
     }
 
-    var signAndEnforce = function(signature, userFn) {
+    var signAndEnforce = function (signature, userFn) {
         return enforce(sign(signature, userFn));
     }
 
