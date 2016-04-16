@@ -1,4 +1,4 @@
-var signet = (function () {
+var signet = (function() {
     'use strict';
 
     var supportedTypes = {
@@ -14,15 +14,15 @@ var signet = (function () {
         undefined: isType('undefined')
     };
 
-    // State machine for type lexer
+    // State rules for type lexer
+
     var lexRules = [
         function initRule(key, types) {
             return types.length === 1 ? 'accept' : 'init';
         },
 
         function failRule(key, types) {
-            var badTypes = types.filter(isTypeInvalid);
-            return types.length === 0 || badTypes.length > 0 ? 'fail' : key;
+            return isBadTypeList(types) ? 'fail' : key;
         }
 
     ];
@@ -33,13 +33,15 @@ var signet = (function () {
         fail: [] // Always fails
     }
 
+    // State rules for type verification
+
     var verifyRules = [
-        function skip(key, type) {
-            return type.optional ? 'skip' : 'accept';
+        function accept(key, typeObj, value) {
+            return supportedTypes[typeObj.type](value) ? 'accept' : 'fail';
         },
 
-        function failRule(key, typeObj, value) {
-            return key !== 'skip' && !supportedTypes[typeObj.type](value) ? 'fail' : key;
+        function skip(key, typeObj) {
+            return typeObj.optional && key === 'fail' ? 'skip' : key;
         }
     ];
 
@@ -49,8 +51,10 @@ var signet = (function () {
         fail: []
     };
 
+    // State machine execution
+
     function updateState(states, stateKey, type, value) {
-        return states[stateKey].reduce(function (key, rule) {
+        return states[stateKey].reduce(function(key, rule) {
             return rule(key, type, value);
         }, stateKey);
     }
@@ -61,21 +65,25 @@ var signet = (function () {
     // Predicate functions
 
     function isType(type) {
-        return function (value) {
+        return function(value) {
             return type === typeof value;
         }
     }
 
     function isInstanceOf(obj) {
-        return function (value) {
+        return function(value) {
             return value instanceof obj;
         }
     }
 
     function matches(pattern) {
-        return function (value) {
+        return function(value) {
             return value.match(pattern) !== null;
         }
+    }
+
+    function isBadTypeList (types){
+            return types.length === 0 || types.filter(isTypeInvalid).length > 0;
     }
 
     function isTypeInvalid(typeObj) {
@@ -116,32 +124,14 @@ var signet = (function () {
     // Utility functions
 
     function stripParens(token) {
-        return matches(/^\(\)$/)(token) ? token.replace(/\s*/g, '') : token.replace(/[()]/g, '');
-    }
-
-    function buildTypeObj(token) {
-        var splitType = token.split(/\s*(\<|\:)\s*/);
-        var type = splitType[0].replace(/[\[\]]/g, '');
-        var secondaryType = splitType.length > 1 ? splitType.pop() : undefined;
-        var isValueType = isType('string')(secondaryType) && matches(/^[^\>]+\>/g)(secondaryType);
-
-        return {
-            type: type,
-            subType: !isValueType ? secondaryType : undefined,
-            valueType: isValueType ? secondaryType.replace('>', '') : undefined,
-            optional: matches(/\[[^\]]+\]/)(token)
-        };
+        return matches(/^\(\s*\)$/)(token) ? token.replace(/\s*/g, '') : token.replace(/[()]/g, '');
     }
 
     function splitSignature(signature) {
         return signature.split(/\s*\=\>\s*/g);
     }
 
-    function buildTypeTree(rawToken) {
-        return stripParens(rawToken.trim())
-            .split(/\s*\,\s*/g)
-            .map(buildTypeObj);
-    }
+    // Metadata attachment
 
     function attachProp(userFn, propName, value) {
         Object.defineProperty(userFn, propName, {
@@ -159,26 +149,49 @@ var signet = (function () {
         return userFn;
     }
 
-    // Core functionality
+    // Type construction
 
-    function sign(signature, userFn) {
-        var tokenTree = splitSignature(signature).map(buildTypeTree);
+    function buildTypeObj(token) {
+        var splitType = token.replace(/[\[\]]/g, '').split(/\s*(\<|\:)\s*/);
 
-        throwOnInvalidSignature(tokenTree, userFn);
+        var type = splitType[0];
+        var secondaryType = splitType.length > 1 ? splitType.pop().replace('>') : undefined;
+        var isValueType = isType('string')(secondaryType) && type === 'array';
 
-        return attachSignatureData(userFn, signature, tokenTree);
+        return {
+            type: type,
+            subType: !isValueType ? secondaryType : undefined,
+            valueType: isValueType ? secondaryType : undefined,
+            optional: matches(/\[[^\]]+\]/)(token)
+        };
+    }
+
+    function buildTypeTree(rawToken) {
+        return stripParens(rawToken.trim())
+            .split(/\s*\,\s*/g)
+            .map(buildTypeObj);
+    }
+
+    // Verification mutually recursive behavior
+
+    function getNextArgs(state, args) {
+        return state === 'skip' ? args : args.slice(1);
+    }
+
+    function isVerificationComplete(nextSignature, nextArgs) {
+        return nextSignature.length === 0 || nextArgs.length === 0;
     }
 
     function nextVerificationStep(inputSignature, args, state) {
         var errorMessage = 'Expected type ' + inputSignature[0].type + ' but got ' + typeof args[0];
 
         var nextSignature = inputSignature.slice(1);
-        var nextArgs = state === 'skip' ? args : args.slice(1);
-        var complete = nextSignature.length === 0 || nextArgs.length === 0;
+        var nextArgs = getNextArgs(state, args);
+        var done = isVerificationComplete(nextSignature, nextArgs);
 
         throwOnTypeState('fail', state, errorMessage);
 
-        return complete ? state : verifyOnState(nextSignature, nextArgs, state);
+        return !done ? verifyOnState(nextSignature, nextArgs, state) : state;
     }
 
     function verifyOnState(inputSignature, args, inState) {
@@ -188,11 +201,7 @@ var signet = (function () {
         return nextVerificationStep(inputSignature, args, outState);
     }
 
-    function verify(signedFn, args) {
-        var finalState = verifyOnState(signedFn.signatureTree[0], Array.prototype.slice.call(args, 0));
-
-        throwOnTypeState('skip', finalState, 'Optional types were not fulfilled properly');
-    }
+    // Type enforcement setup and behavior
 
     function buildWrapperArgs(signedFn, args) {
         var done = signedFn.length <= args.length;
@@ -221,19 +230,37 @@ var signet = (function () {
         return wrapperFn(signedFn, verify, callAndEnforce);
     }
 
-    function enforce(signedFn) {
-        var enforceWrapper = buildEnforceWrapper(signedFn);
+    // Core functionality
 
-        attachProp(enforceWrapper, 'signature', signedFn.signature);
-        attachProp(enforceWrapper, 'signatureTree', signedFn.signatureTree);
-        attachProp(enforceWrapper, 'toString', signedFn.toString.bind(signedFn));
+    function sign(signature, userFn) {
+        var tokenTree = splitSignature(signature).map(buildTypeTree);
 
-        return enforceWrapper;
+        throwOnInvalidSignature(tokenTree, userFn);
+
+        return attachSignatureData(userFn, signature, tokenTree);
     }
 
-    var signAndEnforce = function (signature, userFn) {
+    function verify(signedFn, args) {
+        var finalState = verifyOnState(signedFn.signatureTree[0], Array.prototype.slice.call(args, 0));
+
+        throwOnTypeState('skip', finalState, 'Optional types were not fulfilled properly');
+    }
+
+    function enforce(signedFn) {
+        var enforcementWrapper = buildEnforceWrapper(signedFn);
+
+        attachProp(enforcementWrapper, 'signature', signedFn.signature);
+        attachProp(enforcementWrapper, 'signatureTree', signedFn.signatureTree);
+        attachProp(enforcementWrapper, 'toString', signedFn.toString.bind(signedFn));
+
+        return enforcementWrapper;
+    }
+
+    var signAndEnforce = function(signature, userFn) {
         return enforce(sign(signature, userFn));
     }
+
+    // Final module definition
 
     var signet = {
         enforce: signAndEnforce('string, function => function', signAndEnforce),
