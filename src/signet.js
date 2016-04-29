@@ -1,4 +1,4 @@
-var signet = (function() {
+var signet = (function () {
     'use strict';
 
     var supportedTypes = {
@@ -54,7 +54,7 @@ var signet = (function() {
     // State machine execution
 
     function updateState(states, stateKey, type, value) {
-        return states[stateKey].reduce(function(key, rule) {
+        return states[stateKey].reduce(function (key, rule) {
             return rule(key, type, value);
         }, stateKey);
     }
@@ -65,25 +65,25 @@ var signet = (function() {
     // Predicate functions
 
     function isType(type) {
-        return function(value) {
+        return function (value) {
             return type === typeof value;
         }
     }
 
     function isInstanceOf(obj) {
-        return function(value) {
+        return function (value) {
             return value instanceof obj;
         }
     }
 
     function matches(pattern) {
-        return function(value) {
+        return function (value) {
             return value.match(pattern) !== null;
         }
     }
 
-    function isBadTypeList (types){
-            return types.length === 0 || types.filter(isTypeInvalid).length > 0;
+    function isBadTypeList(types) {
+        return types.length === 0 || types.filter(isTypeInvalid).length > 0;
     }
 
     function isTypeInvalid(typeObj) {
@@ -256,14 +256,23 @@ var signet = (function() {
         return enforcementWrapper;
     }
 
-    var signAndEnforce = function(signature, userFn) {
+    var signAndEnforce = function (signature, userFn) {
         return enforce(sign(signature, userFn));
+    }
+
+    function extend(key, predicate) {
+        if (typeof supportedTypes[key] !== 'undefined') {
+            throw new Error('Cannot redefine type ' + key);
+        }
+        
+        supportedTypes[key] = predicate;
     }
 
     // Final module definition
 
     var signet = {
         enforce: signAndEnforce('string, function => function', signAndEnforce),
+        extend: signAndEnforce('string, function => undefined', extend),
         sign: signAndEnforce('string, function => function', sign),
         verify: signAndEnforce('function, object => undefined', verify)
     };

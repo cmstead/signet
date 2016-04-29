@@ -303,6 +303,43 @@ describe('signet', function() {
 
     });
     
+    describe('extend', function () {
+        
+        it('should extend the type language with a new type', function () {
+            var intType = signet.enforce('number => boolean', function (value){
+                return Math.floor(value) === value;
+            });
+            
+            signet.extend('int', intType);
+            
+            var intAdd = signet.enforce('int, int => int', function(a, b) { return a + b; });
+            
+            assert.throws(intAdd.bind(null, 1.2, 3));
+        });
+        
+        it('should throw an error if a type is already defined', function () {
+            var intType = signet.enforce('number => boolean', function (value){
+                return Math.floor(value) === value;
+            });
+            
+            // Int type is already defined from test above. Cannot isolate this test. : (
+            assert.throws(signet.extend.bind(null, 'int', intType));
+        });
+        
+        it('should provide type object to type predicate for richer checking', function () {
+            var rangedType = signet.enforce('number => boolean', function (value, typeObj) {
+                var range = typeObj.valueType.split('|');
+                var lowerBound = parseInt(range[0], 10);
+                var upperBound = parseInt(range[1], 10);
+                
+                return lowerBound <= range && range <= upperBound;
+            });
+            
+            
+        });
+        
+    });
+    
     describe('performance - no assertions here', function () {
         
         var functionFactory;
