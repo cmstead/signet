@@ -327,16 +327,39 @@ describe('signet', function() {
         });
         
         it('should provide type object to type predicate for richer checking', function () {
-            var rangedType = signet.enforce('number => boolean', function (value, typeObj) {
+            var rangedType = signet.enforce('number, object => boolean', function (value, typeObj) {
                 var range = typeObj.valueType.split('|');
                 var lowerBound = parseInt(range[0], 10);
                 var upperBound = parseInt(range[1], 10);
                 
-                return lowerBound <= range && range <= upperBound;
+                return lowerBound <= value && value <= upperBound;
             });
             
+            signet.extend('ranged', rangedType);
             
+            var rangedFn = signet.enforce('ranged<3|5> => any', function (a) {});
+            
+            assert.doesNotThrow(rangedFn.bind(null, 4));
+            assert.throws(rangedFn.bind(null, 9));
         });
+        
+    });
+    
+    describe('subtype', function () {
+        
+        it('should subtype from an existing type', function () {
+            signet.subtype('int')('natural', function (value) {
+                return value > 0;
+            });
+            
+            var naturalNumberFn = signet.enforce('natural => any', function (a) {});
+            
+            console.log(naturalNumberFn.signatureTree);
+            
+            assert.throws(naturalNumberFn.bind(null, 1.5));
+            assert.throws(naturalNumberFn.bind(null, -1));
+            assert.doesNotThrow(naturalNumberFn.bind(null, 3));
+        })
         
     });
     

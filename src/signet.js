@@ -37,7 +37,7 @@ var signet = (function () {
 
     var verifyRules = [
         function accept(key, typeObj, value) {
-            return supportedTypes[typeObj.type](value) ? 'accept' : 'fail';
+            return supportedTypes[typeObj.type](value, typeObj) ? 'accept' : 'fail';
         },
 
         function skip(key, typeObj) {
@@ -155,8 +155,8 @@ var signet = (function () {
         var splitType = token.replace(/[\[\]]/g, '').split(/\s*(\<|\:)\s*/);
 
         var type = splitType[0];
-        var secondaryType = splitType.length > 1 ? splitType.pop().replace('>') : undefined;
-        var isValueType = isType('string')(secondaryType) && type === 'array';
+        var secondaryType = splitType.length > 1 ? splitType.pop().replace('>', '') : undefined;
+        var isValueType = isType('string')(secondaryType) && (type === 'array' || token.match(/^[^\<]+\<[^\>]+\>$/) !== null);
 
         return {
             type: type,
@@ -264,8 +264,17 @@ var signet = (function () {
         if (typeof supportedTypes[key] !== 'undefined') {
             throw new Error('Cannot redefine type ' + key);
         }
-        
+
         supportedTypes[key] = predicate;
+    }
+    
+    function subtype (existingType){
+        var typeSignature = existingType + ', object => boolean';
+        
+        return function (key, predicate){
+            var enforcedPredicate = signAndEnforce(typeSignature, predicate);
+            extend(key, enforcedPredicate);
+        }
     }
 
     // Final module definition
@@ -274,6 +283,7 @@ var signet = (function () {
         enforce: signAndEnforce('string, function => function', signAndEnforce),
         extend: signAndEnforce('string, function => undefined', extend),
         sign: signAndEnforce('string, function => function', sign),
+        subtype: signAndEnforce('string => string, function => undefined', subtype),
         verify: signAndEnforce('function, object => undefined', verify)
     };
 
