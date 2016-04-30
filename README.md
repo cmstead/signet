@@ -125,6 +125,37 @@ Curried functions are also fully enforced all the way down:
     
     enforcedCurriedAdd(1)('foo'); // Throws -- Expected type number, but got string
 
+### Types and subtypes
+
+New types can be added by using the extend function with a key and a predicate function describing the behavior of the data type
+
+    signet.extend('foo', function (value) { return value !== 'bar'; });
+    
+    signet.enforce('foo => int', function (value) { return parseInt(value, 10); })('bar'); // Throws error
+
+Subtypes can be added by using the subtype function. This is particularly useful for defining and using business types or defining restricted types.
+
+    signet.subtype('number')('int', function (value) { return Math.floor(value) === value; });
+    
+    var enforcedIntAdd = signet.enforce('int, int => int', function (a, b) { a + b; });
+    
+    enforcedIntAdd(1.2, 5); // Throws error
+    enforcedIntAdd(99, 3000); // 3099
+
+Using secondary type information for subtype definition
+
+    signet.subtype('number')('ranged', function (value, typeObj) {
+        var boundTokens = typeObj.split('|');
+        var lowerBound = parseInt(boundTokens[0], 10);
+        var upperBound = parseInt(boundTokens[1], 10);
+        
+        return lowerBound <= value && value <= upperBound;
+    });
+    
+    var tripleSmallNum = signet.enforce('ranged<1|10> => number', function (value) { return value * 3; });
+    tripleSmallNum(99); // Throws error
+    tripleSmallNum(3.5); // 10.5
+
 ## Development
 
 Signet development will proceed following the checklist below.  The intent is to deliver useful behavior at each step, so
@@ -140,7 +171,7 @@ the list should be viewed as a planned output order.
     - [x] Extend argument verification function to handle optional type specs
     - [x] Add enforce functions
     - [x] Update AST to reflect rich types including object subtypes, array value types and optional types
-    - [ ] Add build step to integrate minification for browsers
+    - [x] Add build step to integrate minification for browsers
 
 - Test and development module
     - [ ] Function to run tests against types as property tests, so type info can be kept fresh
