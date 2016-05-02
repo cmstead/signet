@@ -391,6 +391,18 @@ describe('signet', function() {
         
     });
     
+    describe('alias', function () {
+        
+        it('should define a new data type matching requirements', function () {
+            signet.alias('testR2IntPoint', 'testPair<number;number>');
+            var checkIntPoint = signet.isTypeOf('testR2IntPoint');
+            
+            assert.equal(checkIntPoint([3, 4]), true);
+            assert.equal(checkIntPoint([9.3, 'foo']), false);
+        });
+        
+    });
+        
     describe('isTypeOf', function () {
         
         it('should return a predicate function', function () {

@@ -287,6 +287,10 @@ var signet = (function () {
         }
     }
 
+    function alias (key, typedef){
+        extend(key, isTypeOf(typedef));
+    }
+
     function isTypeOf(typeStr) {
         var typeObj = buildTypeObj(typeStr);
         
@@ -306,6 +310,7 @@ var signet = (function () {
     // Final module definition
 
     var signet = {
+        alias: signAndEnforce('string, string => undefined', alias),
         enforce: signAndEnforce('string, function => function', signAndEnforce),
         extend: signAndEnforce('string, function => undefined', extend),
         isTypeOf: isTypeOf,
