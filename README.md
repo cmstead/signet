@@ -14,15 +14,16 @@ Signet will allow for single-line strings which contain all of the following:
 
 - Type names -- All primary type names should adhere to the list of supported types below
 - Subtype names -- Subtype names must not contain any reserved characters as listed next
-- `<>` -- Angle brackets for declaring type on collections like arrays and object literals
+- `<>` -- Angle brackets are for handling higher-kinded types and verify value only when type logic supports it
 - `[]` -- Brackets are meant to enclose optional values and should always come in a matched pair
 - `=>` -- Function output "fat-arrow" notation used for expressing output from input
 - `,` -- Commas are required for separating types on functions
 - `:` -- Colons allow for object:instanceof annotation
+- `;` -- Semicolons allow for multiple values within the angle bracket notation
 - `()` -- Optional parentheses to group types, which will be treated as spaces by interpreter
 
 Spaces are allowed around commas and fat arrows, however spaces cannot be used inside type declarations. For instance
-`"object:subtype, number => array"` is valid, but `"object : subtype, number => array"` is not.
+`"object:subtype, number => array"` is valid, but `"ob ject:subtype, number => array"` is not.
 
 **Important note about data types:**
 
@@ -30,11 +31,11 @@ Data types are either primary or secondary. Primary types can only be from the l
 specified below, which ensures that all variables can be validated in some meaningful way. Secondary data types can be
 anything as they are not checked.
 
-Only arrays and objects can have secondary types. Arrays with secondary types are annotated as `array<typeName>`. Objects
-with secondary types are annotated as `object:typeName`. The reason for the syntactical difference is beyond the scope
-of this document. 
+Object notation allows for the declaration, though not the verification, of instantiable objects. Angle bracket notation 
+is for declaring run-time evaluated late-declared type information (higher-kinded types) and collection types such as
+arrays which may contain varied types.
 
-List of supported primary types
+List of supported (built in) primary types
 
 - ()
 - any

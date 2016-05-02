@@ -338,11 +338,11 @@ describe('signet', function() {
             var pairFn = signet.enforce('pair<number; number> => any', function (a) {});
             
             assert.doesNotThrow(pairFn.bind(null, [5, 5]));
-            assert.throws(pairFn.bind(null, [5, 'foo']));
+            assert.throws(pairFn.bind(null, [5, 'foo']), 'Expected type pair<number;number> but got object');
         });
         
         it('should provide isTypeOf for higher-kinded type checking', function () {
-            var tripleType = signet.enforce('array, object, function => boolean', function (value, typeObj, isTypeOf){
+            var tripleType = signet.enforce('array, object, function => boolean', function tripleType (value, typeObj, isTypeOf){
                 return isTypeOf(typeObj.valueType[0])(value[0]) &&
                        isTypeOf(typeObj.valueType[1])(value[1]) &&
                        isTypeOf(typeObj.valueType[2])(value[2]);
@@ -383,8 +383,6 @@ describe('signet', function() {
             });
             
             var naturalNumberFn = signet.enforce('natural => any', function (a) {});
-            
-            console.log(naturalNumberFn.signatureTree);
             
             assert.throws(naturalNumberFn.bind(null, 1.5));
             assert.throws(naturalNumberFn.bind(null, -1));

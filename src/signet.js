@@ -172,6 +172,16 @@ var signet = (function () {
             .map(buildTypeObj);
     }
 
+    function buildTypeStr(typeObj) {
+        var typeStr = typeObj.type;
+        
+        if(!isType('undefined')(typeObj.valueType)) {
+            typeStr += '<' + typeObj.valueType.join(';') + '>';
+        }
+        
+        return typeStr;
+    }
+
     // Verification mutually recursive behavior
 
     function getNextArgs(state, args) {
@@ -183,7 +193,7 @@ var signet = (function () {
     }
 
     function nextVerificationStep(inputSignature, args, state) {
-        var errorMessage = 'Expected type ' + inputSignature[0].type + ' but got ' + typeof args[0];
+        var errorMessage = 'Expected type ' + buildTypeStr(inputSignature[0]) + ' but got ' + typeof args[0];
 
         var nextSignature = inputSignature.slice(1);
         var nextArgs = getNextArgs(state, args);
@@ -269,7 +279,7 @@ var signet = (function () {
     }
 
     function subtype(existingType) {
-        var typeSignature = existingType + ', object => boolean';
+        var typeSignature = existingType + ', object, function => boolean';
 
         return function (key, predicate) {
             var enforcedPredicate = signAndEnforce(typeSignature, predicate);
