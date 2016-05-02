@@ -142,19 +142,34 @@ Subtypes can be added by using the subtype function. This is particularly useful
     enforcedIntAdd(1.2, 5); // Throws error
     enforcedIntAdd(99, 3000); // 3099
 
-Using secondary type information for subtype definition
+Using secondary type information for higher-kinded subtype definition. Any secondary type strings for higher-kinded
+types will be automatically split on ';' to allow for multiple type arguments.
 
-    signet.subtype('number')('ranged', function (value, typeObj) {
-        var boundTokens = typeObj.split('|');
-        var lowerBound = parseInt(boundTokens[0], 10);
-        var upperBound = parseInt(boundTokens[1], 10);
-        
-        return lowerBound <= value && value <= upperBound;
+    signet.subtype('array')('triple', function (value, typeObj, isTypeOf) {
+        return isTypeOf(typeObj.valueType[0])(value[0]) &&
+               isTypeOf(typeObj.valueType[1])(value[1]) &&
+               isTypeOf(typeObj.valueType[2])(value[2]);
+    });
+
+    var multiplyTripleBy5 = signet.enforce('triple<int; int; int> => triple<int; int; int>', function (values) {
+        return values.map(x => x * 5);
     });
     
-    var tripleSmallNum = signet.enforce('ranged<1|10> => number', function (value) { return value * 3; });
-    tripleSmallNum(99); // Throws error
-    tripleSmallNum(3.5); // 10.5
+    multiplyTripleBy5([1, 2]); // Throws error
+    multiplyTripleBy5([1, 2, 3]); // [5, 10, 15]
+
+### Direct type checking
+
+Types can be checked from outside of a function call with isTypeOf.  The isTypeOf function is curried, so a specific
+type check can be reused without recomputing the type object definition:
+
+    var isInt = signet.isTypeOf('int');
+    isInt(7); // true
+    isInt(83.7); // false
+    
+    var isRanged3to4 = signet.isTypeOf('ranged<3;4>');
+    isRanged3to4(3.72); // true
+    isRanged3to4(4000); // false
 
 ## Development
 
@@ -178,6 +193,10 @@ the list should be viewed as a planned output order.
     - [ ] Function to return argument/signature mapping as key/value pairs
 
 ## Breaking Changes
+
+### 0.9.x
+
+- valueType is now an array instead of a string; any higher-kinded type definitions relying on a string will need updating
 
 ### 0.4.x
 

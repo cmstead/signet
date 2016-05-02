@@ -37,7 +37,7 @@ var signet = (function () {
 
     var verifyRules = [
         function accept(key, typeObj, value) {
-            return supportedTypes[typeObj.type](value, typeObj) ? 'accept' : 'fail';
+            return supportedTypes[typeObj.type](value, typeObj, isTypeOf) ? 'accept' : 'fail';
         },
 
         function skip(key, typeObj) {
@@ -161,7 +161,7 @@ var signet = (function () {
         return {
             type: type,
             subType: !isValueType ? secondaryType : undefined,
-            valueType: isValueType ? secondaryType : undefined,
+            valueType: isValueType ? secondaryType.split(/\s*\;+\s*/g) : undefined,
             optional: matches(/\[[^\]]+\]/)(token)
         };
     }
@@ -267,14 +267,30 @@ var signet = (function () {
 
         supportedTypes[key] = predicate;
     }
-    
-    function subtype (existingType){
+
+    function subtype(existingType) {
         var typeSignature = existingType + ', object => boolean';
-        
-        return function (key, predicate){
+
+        return function (key, predicate) {
             var enforcedPredicate = signAndEnforce(typeSignature, predicate);
             extend(key, enforcedPredicate);
         }
+    }
+
+    function isTypeOf(typeStr) {
+        var typeObj = buildTypeObj(typeStr);
+        
+        return function (value) {
+            var result = true;
+            
+            try {
+                result = supportedTypes[typeObj.type](value, typeObj);
+            } catch (e) {
+                result = false;
+            }
+            
+            return result;
+        };
     }
 
     // Final module definition
@@ -282,6 +298,7 @@ var signet = (function () {
     var signet = {
         enforce: signAndEnforce('string, function => function', signAndEnforce),
         extend: signAndEnforce('string, function => undefined', extend),
+        isTypeOf: isTypeOf,
         sign: signAndEnforce('string, function => function', sign),
         subtype: signAndEnforce('string => string, function => undefined', subtype),
         verify: signAndEnforce('function, object => undefined', verify)

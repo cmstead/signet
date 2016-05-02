@@ -325,10 +325,40 @@ describe('signet', function() {
             // Int type is already defined from test above. Cannot isolate this test. : (
             assert.throws(signet.extend.bind(null, 'int', intType));
         });
+
+        it('should split secondary type values on ; for higher-kinded types', function () {
+            var pairType = signet.enforce('array, object => boolean', function (value, typeObj){
+                var firstType = typeObj.valueType[0];
+                var secondType = typeObj.valueType[1];
+                return typeof value[0] === firstType && typeof value[1] === secondType;
+            });
+            
+            signet.extend('pair', pairType);
+            
+            var pairFn = signet.enforce('pair<number; number> => any', function (a) {});
+            
+            assert.doesNotThrow(pairFn.bind(null, [5, 5]));
+            assert.throws(pairFn.bind(null, [5, 'foo']));
+        });
+        
+        it('should provide isTypeOf for higher-kinded type checking', function () {
+            var tripleType = signet.enforce('array, object, function => boolean', function (value, typeObj, isTypeOf){
+                return isTypeOf(typeObj.valueType[0])(value[0]) &&
+                       isTypeOf(typeObj.valueType[1])(value[1]) &&
+                       isTypeOf(typeObj.valueType[2])(value[2]);
+            });
+            
+            signet.extend('triple', tripleType);
+            
+            var tripleFn = signet.enforce('triple<number; number; number> => any', function (a) {});
+            
+            assert.doesNotThrow(tripleFn.bind(null, [5, 6, 7]));
+            assert.throws(tripleFn.bind(null, [5, 'foo', 7]));
+        });
         
         it('should provide type object to type predicate for richer checking', function () {
             var rangedType = signet.enforce('number, object => boolean', function (value, typeObj) {
-                var range = typeObj.valueType.split('|');
+                var range = typeObj.valueType;
                 var lowerBound = parseInt(range[0], 10);
                 var upperBound = parseInt(range[1], 10);
                 
@@ -337,7 +367,7 @@ describe('signet', function() {
             
             signet.extend('ranged', rangedType);
             
-            var rangedFn = signet.enforce('ranged<3|5> => any', function (a) {});
+            var rangedFn = signet.enforce('ranged<3;5> => any', function (a) {});
             
             assert.doesNotThrow(rangedFn.bind(null, 4));
             assert.throws(rangedFn.bind(null, 9));
@@ -361,6 +391,29 @@ describe('signet', function() {
             assert.doesNotThrow(naturalNumberFn.bind(null, 3));
         })
         
+    });
+    
+    describe('isTypeOf', function () {
+        
+        it('should return a predicate function', function () {
+            assert.equal(typeof signet.isTypeOf('number'), 'function');
+        });
+        
+        it('should return true if basic type matches', function () {
+            assert.equal(signet.isTypeOf('number')(5), true);
+        });
+        
+        it('should return false if basic type does not match', function () {
+            assert.equal(signet.isTypeOf('string')({}), false);
+        });
+        
+        it('should not throw on failing subtype check when supertype is not matched', function () {
+            assert.doesNotThrow(signet.isTypeOf('int').bind(null, 'foo'));
+        });
+        
+        it('should properly check higher-kinded types', function () {
+            assert.equal(signet.isTypeOf('ranged<0;10>')(7), true);
+        });
     });
     
     describe('performance - no assertions here', function () {
