@@ -159,6 +159,17 @@ types will be automatically split on ';' to allow for multiple type arguments.
     multiplyTripleBy5([1, 2]); // Throws error
     multiplyTripleBy5([1, 2, 3]); // [5, 10, 15]
 
+Types can be aliased using the `alias` function. This allows the programmer to define and declare a custom type based on
+existing types or a particular implementation on a higher-kinded types.
+
+    signet.alias('R3Point', 'triple<number;number;number>');
+    
+    signet.isTypeOf('R3Point')([1, 2, 3]); // true
+    signet.isTypeOf('R3Point')([1, 'foo', 3]); // false
+    
+    // Matrix in R3:
+    signet.isTypeOf('triple<R3Point; R3Point; R3Point>')([[1, 2, 3], [4, 5, 6], [7, 8, 9]]); // true
+
 ### Direct type checking
 
 Types can be checked from outside of a function call with isTypeOf.  The isTypeOf function is curried, so a specific
