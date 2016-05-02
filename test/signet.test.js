@@ -310,9 +310,9 @@ describe('signet', function() {
                 return Math.floor(value) === value;
             });
             
-            signet.extend('int', intType);
+            signet.extend('testInt', intType);
             
-            var intAdd = signet.enforce('int, int => int', function(a, b) { return a + b; });
+            var intAdd = signet.enforce('testInt, testInt => testInt', function(a, b) { return a + b; });
             
             assert.throws(intAdd.bind(null, 1.2, 3));
         });
@@ -323,7 +323,7 @@ describe('signet', function() {
             });
             
             // Int type is already defined from test above. Cannot isolate this test. : (
-            assert.throws(signet.extend.bind(null, 'int', intType));
+            assert.throws(signet.extend.bind(null, 'testInt', intType));
         });
 
         it('should split secondary type values on ; for higher-kinded types', function () {
@@ -333,12 +333,12 @@ describe('signet', function() {
                 return typeof value[0] === firstType && typeof value[1] === secondType;
             });
             
-            signet.extend('pair', pairType);
+            signet.extend('testPair', pairType);
             
-            var pairFn = signet.enforce('pair<number; number> => any', function (a) {});
+            var pairFn = signet.enforce('testPair<number; number> => any', function (a) {});
             
             assert.doesNotThrow(pairFn.bind(null, [5, 5]));
-            assert.throws(pairFn.bind(null, [5, 'foo']), 'Expected type pair<number;number> but got object');
+            assert.throws(pairFn.bind(null, [5, 'foo']), 'Expected type testPair<number;number> but got object');
         });
         
         it('should provide isTypeOf for higher-kinded type checking', function () {
@@ -348,9 +348,9 @@ describe('signet', function() {
                        isTypeOf(typeObj.valueType[2])(value[2]);
             });
             
-            signet.extend('triple', tripleType);
+            signet.extend('testTriple', tripleType);
             
-            var tripleFn = signet.enforce('triple<number; number; number> => any', function (a) {});
+            var tripleFn = signet.enforce('testTriple<number; number; number> => any', function (a) {});
             
             assert.doesNotThrow(tripleFn.bind(null, [5, 6, 7]));
             assert.throws(tripleFn.bind(null, [5, 'foo', 7]));
@@ -365,9 +365,9 @@ describe('signet', function() {
                 return lowerBound <= value && value <= upperBound;
             });
             
-            signet.extend('ranged', rangedType);
+            signet.extend('testRanged', rangedType);
             
-            var rangedFn = signet.enforce('ranged<3;5> => any', function (a) {});
+            var rangedFn = signet.enforce('testRanged<3;5> => any', function (a) {});
             
             assert.doesNotThrow(rangedFn.bind(null, 4));
             assert.throws(rangedFn.bind(null, 9));
@@ -378,7 +378,7 @@ describe('signet', function() {
     describe('subtype', function () {
         
         it('should subtype from an existing type', function () {
-            signet.subtype('int')('natural', function (value) {
+            signet.subtype('testInt')('natural', function (value) {
                 return value > 0;
             });
             
@@ -406,11 +406,11 @@ describe('signet', function() {
         });
         
         it('should not throw on failing subtype check when supertype is not matched', function () {
-            assert.doesNotThrow(signet.isTypeOf('int').bind(null, 'foo'));
+            assert.doesNotThrow(signet.isTypeOf('testInt').bind(null, 'foo'));
         });
         
         it('should properly check higher-kinded types', function () {
-            assert.equal(signet.isTypeOf('ranged<0;10>')(7), true);
+            assert.equal(signet.isTypeOf('testRanged<0;10>')(7), true);
         });
     });
     

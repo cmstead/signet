@@ -155,13 +155,13 @@ var signet = (function () {
         var splitType = token.replace(/[\[\]]/g, '').split(/\s*(\<|\:)\s*/);
 
         var type = splitType[0];
-        var secondaryType = splitType.length > 1 ? splitType.pop().replace('>', '') : undefined;
+        var secondaryType = splitType.length > 1 ? splitType.pop().trim() : undefined;
         var isValueType = isType('string')(secondaryType) && (type === 'array' || token.match(/^[^\<]+\<[^\>]+\>$/) !== null);
 
         return {
             type: type,
             subType: !isValueType ? secondaryType : undefined,
-            valueType: isValueType ? secondaryType.split(/\s*\;+\s*/g) : undefined,
+            valueType: isValueType ? secondaryType.substring(0, secondaryType.length - 1).split(/\s*\;+\s*/g) : undefined,
             optional: matches(/\[[^\]]+\]/)(token)
         };
     }
