@@ -1,8 +1,8 @@
 {
   "name": "signet",
-  "version": "0.10.1",
+  "version": "0.10.2",
   "description": "A function type signature library for Javascript",
-  "main": "./src/signet.types.js",
+  "main": "./src/signet.js",
   "scripts": {
     "test": "node ./node_modules/mocha/bin/mocha ./test",
     "postinstall": "npm install uglify -g",
