@@ -73,6 +73,45 @@ describe('extension types', function () {
             assert.equal(signet.isTypeOf('tuple<number;number>')([1, 'foo']), false);
         });
         
+        it('should nest with aliasing', function () {
+            signet.alias('R2Point', 'tuple<number;number>');
+            signet.alias('R2Matrix', 'tuple<R2Point;R2Point>');
+            
+            assert.equal(signet.isTypeOf('R2Matrix')([[1, 2], [3, 4]]), true);
+        });
+        
+    });
+    
+    describe('boundedString', function () {
+        
+        it('should return true on acceptable-length string', function () {
+            assert.equal(signet.isTypeOf('boundedString<5;10>')('Hello!'), true);
+        });
+        
+        it('should return false on string length out of bounds', function () {
+            assert.equal(signet.isTypeOf('boundedString<5;10>')('foo'), false);
+        });
+        
+        it('should accept the string if it is greater than lower bound and upper bound is not defined', function () {
+            assert.equal(signet.isTypeOf('boundedString<3>')('Acceptable string'), true);
+        });
+        
+    });
+    
+    describe('formattedString', function () {
+        
+        it('should return true on acceptably formatted string', function () {
+            assert.equal(signet.isTypeOf('formattedString<\\\-+>')('my-test-string'), true);
+        });
+        
+        it('should return false on unacceptably formatted string', function () {
+            assert.equal(signet.isTypeOf('formattedString<\\\-+>')('my test string'), false);
+        });
+        
+        it('should return true on correctly formatted social security number', function () {
+            assert.equal(signet.isTypeOf('formattedString<[0-9]{3}-[0-9]{2}-[0-9]{4}>')('123-45-6789'), false);
+        });
+        
     });
     
 });

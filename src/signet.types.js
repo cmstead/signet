@@ -40,6 +40,23 @@
                     .reduce(function (a, b) { return a && b; }, true);
     }
 
+    signet.subtype('string')('boundedString', boundedStringType);
+    
+    function boundedStringType (valueStr, typeObj){
+        var lowerBound = parseInt(typeObj.valueType[0], 10);
+        var upperBound = typeObj.valueType.length > 1 ? parseInt(typeObj.valueType[1], 10) : valueStr.length;
+        
+        return lowerBound <= valueStr.length && valueStr.length <= upperBound;
+    }
+
+    signet.subtype('string')('formattedString', formattedStringType);
+    
+    function formattedStringType (valueStr, typeObj){
+        var pattern = new RegExp(typeObj.valueType[0]);
+        
+        return valueStr.match(pattern) !== null;
+    }
+
     if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
         module.exports = signet;
     }
