@@ -183,6 +183,22 @@ type check can be reused without recomputing the type object definition:
     isRanged3to4(3.72); // true
     isRanged3to4(4000); // false
 
+## Extended types
+
+Signet has extended types provided as a separate module.  In the node environment, the extended types
+are included in the required module, but can be removed by pointing to the signet.js module directly.
+In the browser environment, signet.min.js and signet.types.min.js in that order to include the extended types.
+
+Extended types are as follows:
+
+- `int` - number:int
+- `bounded<min<number>:max<number>>` - number:bounded
+- `boundedInt<min<number>:max<number>>` - number:int:bounded:boundedInt
+- `boundedString<minLength<int>;maxLength<int>>` - string:boundedString
+- `formattedString<regex>` - string:formattedString
+- `tuple<type;type;type...>` - array:tuple
+- `taggedUnion<optionType;optionType;optionType>` - dynamic:taggedUnion
+
 ## Development
 
 Signet development will proceed following the checklist below.  The intent is to deliver useful behavior at each step, so
