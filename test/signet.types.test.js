@@ -114,4 +114,16 @@ describe('extension types', function () {
         
     });
     
+    describe('taggedUnion', function () {
+        
+        it('should verify values correctly on types', function () {
+            var isStringOrInt = signet.isTypeOf('taggedUnion<int;string>');
+            
+            assert.equal(isStringOrInt('foo'), true);
+            assert.equal(isStringOrInt(5), true);
+            assert.equal(isStringOrInt(0.7), false);
+        });
+        
+    });
+    
 });

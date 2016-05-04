@@ -33,7 +33,7 @@
         return signet.isTypeOf(type)(tuple[index]);
     }
     
-    function tupleType(tuple, typeObj, isTypeOf) {
+    function tupleType(tuple, typeObj) {
         return tuple.length === typeObj.valueType.length &&
                typeObj.valueType
                     .map(checkType.bind(null, tuple))
@@ -55,6 +55,14 @@
         var pattern = new RegExp(typeObj.valueType[0]);
         
         return valueStr.match(pattern) !== null;
+    }
+
+    signet.extend('taggedUnion', taggedUnionType);
+    
+    function taggedUnionType (value, typeObj){
+        return typeObj.valueType.reduce(function (result, type) {
+            return result || signet.isTypeOf(type)(value);
+        }, false);
     }
 
     if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
