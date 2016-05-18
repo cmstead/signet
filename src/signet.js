@@ -150,10 +150,40 @@ var signet = (function () {
     }
 
     // Type construction
+    function isSkippedChar (token, index){
+        var isOptionalOpen = index === 0 && token[index] === '[';
+        var isOptionalClose = index === token.length - 1 && token[index] === ']';
+        
+        return isOptionalOpen || isOptionalClose;
+    }
+    function splitOnFirst (delim){
+        return function (token) {
+            var result = [];
+            var tempValue = '';
+            
+            for(var i = 0; i < token.length; i++){
+                if(result.length === 0 && token[i] === delim){
+                    result.push(tempValue);
+                    tempValue = '';
+                } else {
+                    tempValue += token[i];
+                }
+            }
+            
+            result.push(tempValue);
+            
+            return result;
+        };
+    }
+    
+    function splitTypeToken (token){
+        var delimiter = token.indexOf('object:') > -1 ? ':' : '<';
+        return splitOnFirst(delimiter)(token);
+    }
 
     function buildTypeObj(token) {
-        var splitType = token.replace(/[\[\]]/g, '').split(/\s*(\<|\:)\s*/);
-
+        var splitType = splitTypeToken(token.replace(/^\[(.*)\]$/, '$1'));
+        
         var type = splitType[0];
         var secondaryType = splitType.length > 1 ? splitType.pop().trim() : undefined;
         var isValueType = isType('string')(secondaryType) && (type === 'array' || token.match(/^[^\<]+\<[^\>]+\>$/) !== null);

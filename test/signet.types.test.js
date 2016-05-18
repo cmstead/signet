@@ -109,7 +109,7 @@ describe('extension types', function () {
         });
         
         it('should return true on correctly formatted social security number', function () {
-            assert.equal(signet.isTypeOf('formattedString<[0-9]{3}-[0-9]{2}-[0-9]{4}>')('123-45-6789'), false);
+            assert.equal(signet.isTypeOf('formattedString<[0-9]{3}-[0-9]{2}-[0-9]{4}>')('123-45-6789'), true);
         });
         
     });

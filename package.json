@@ -4,7 +4,7 @@
   "description": "A function type signature library for Javascript",
   "main": "./src/signet.types.js",
   "scripts": {
-    "test": "node ./node_modules/mocha/bin/mocha ./test",
+    "test": "node ./node_modules/mocha/bin/mocha ./test/signet.test.js ./test/signet.types.test.js ./test/signet.perf.test.js",
     "postinstall": "npm install uglify -g",
     "minify": "uglify -s ./src/signet.js -o ./src/signet.min.js",
     "minify-types": "uglify -s ./src/signet.types.js -o ./src/signet.types.min.js"
