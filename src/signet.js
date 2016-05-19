@@ -150,12 +150,17 @@ var signet = (function () {
     }
 
     // Type construction
-    function isSkippedChar (token, index){
+    function isOptionalBracket (token, index){
         var isOptionalOpen = index === 0 && token[index] === '[';
         var isOptionalClose = index === token.length - 1 && token[index] === ']';
         
-        return isOptionalOpen || isOptionalClose;
+        return isOptionalOpen || isOptionalClose;        
     }
+    
+    function isWhiteSpace (token, index){
+       return token[index].match(/\s/) !== null;
+    }
+    
     function splitOnFirst (delim){
         return function (token) {
             var result = [];
@@ -165,7 +170,7 @@ var signet = (function () {
                 if(result.length === 0 && token[i] === delim){
                     result.push(tempValue);
                     tempValue = '';
-                } else {
+                } else if(!isWhiteSpace(token, i) && !isOptionalBracket(token, i)) {
                     tempValue += token[i];
                 }
             }
@@ -176,22 +181,28 @@ var signet = (function () {
         };
     }
     
-    function splitTypeToken (token){
-        var delimiter = token.indexOf('object:') > -1 ? ':' : '<';
-        return splitOnFirst(delimiter)(token);
+    function splitTypeToken (token, delimiter){
+        var splitToken = splitOnFirst(delimiter)(token);
+        
+        if(delimiter === '<' && splitToken[1]) {
+            splitToken[1] = splitToken[1].substring(0, splitToken[1].length - 1);
+        }
+        
+        return splitToken;
     }
 
     function buildTypeObj(token) {
-        var splitType = splitTypeToken(token.replace(/^\[(.*)\]$/, '$1'));
+        var delimiter = token.indexOf('object:') > -1 ? ':' : '<';
+        var splitType = splitTypeToken(token, delimiter);
         
         var type = splitType[0];
-        var secondaryType = splitType.length > 1 ? splitType.pop().trim() : undefined;
-        var isValueType = isType('string')(secondaryType) && (type === 'array' || token.match(/^[^\<]+\<[^\>]+\>$/) !== null);
+        var secondaryType = splitType[1];
+        var isValueType = isType('string')(secondaryType) && delimiter === '<';
 
         return {
             type: type,
             subType: !isValueType ? secondaryType : undefined,
-            valueType: isValueType ? secondaryType.substring(0, secondaryType.length - 1).split(/\s*\;+\s*/g) : undefined,
+            valueType: isValueType ? secondaryType.split(/\;+/g) : undefined,
             optional: matches(/\[[^\]]+\]/)(token)
         };
     }
