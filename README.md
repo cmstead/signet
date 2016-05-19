@@ -37,7 +37,7 @@ arrays which may contain varied types.
 List of supported (built in) primary types
 
 - ()
-- any
+- * -- preferred syntax over 'any' type
 - array
 - boolean
 - function
@@ -51,7 +51,7 @@ Example function signatures:
 - Empty argument list: `"() => function"`
 - Simple argument list: `"number, string => boolean"`
 - Subtyped object: `"object:InstantiableName => string"`
-- Typed array: `"array<foo> => string"`
+- Typed array: `"array<number> => string"`
 - Optional argument: `"array, [number] => number"`
 - Curried function: `"number => number => number"`
 

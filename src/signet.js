@@ -3,7 +3,8 @@ var signet = (function () {
 
     var supportedTypes = {
         '()': isType('string'),
-        any: isType('string'),
+        any: function () { return true; },
+        '*': function () { return true; },
         array: isInstanceOf(Array),
         boolean: isType('boolean'),
         function: isType('function'),
@@ -159,7 +160,8 @@ var signet = (function () {
             for(var i = 0; i < token.length; i++){
                 if(result.length === 0 && token[i] === delim){
                     result.push(tempValue);
-                    tempValue = '';
+                    tempValue = token.substring(i + 1, token.length);
+                    break;
                 } else if(!isOptionalBracket(token, i)) {
                     tempValue += token[i];
                 }
@@ -381,7 +383,7 @@ var signet = (function () {
         alias: signAndEnforce('string, string => undefined', alias),
         enforce: signAndEnforce('string, function => function', signAndEnforce),
         extend: signAndEnforce('string, function => undefined', extend),
-        isTypeOf: isTypeOf,
+        isTypeOf: signAndEnforce('string => * => boolean', isTypeOf),
         sign: signAndEnforce('string, function => function', sign),
         subtype: signAndEnforce('string => string, function => undefined', subtype),
         verify: signAndEnforce('function, object => undefined', verify)
