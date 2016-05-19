@@ -301,6 +301,18 @@ describe('signet', function() {
             assert.doesNotThrow(curriedAdd(1).bind(null, 'foo'));
         });
 
+        //  Current goal
+        it.skip('should verify return value', function () {
+            var badFn = signet.enforce(
+                '* => string',
+                function badFn (foo){
+                    return 42;
+                }
+            );
+            
+            assert.throws(badFn.bind(null, 'foo'));
+        });
+
     });
     
     describe('extend', function () {
