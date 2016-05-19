@@ -1,6 +1,6 @@
 # Signet
 
-## A function type signature library for Javascript
+## A type and function signature library for Javascript
 
 Signet is, first and foremost, a documentation library.  Rather than using the Javadoc method for documenting functions and
 behaving as if Javascript were a classical OO language, signet assumes Javascript is a Prototypal OO language, like 
@@ -18,12 +18,11 @@ Signet will allow for single-line strings which contain all of the following:
 - `[]` -- Brackets are meant to enclose optional values and should always come in a matched pair
 - `=>` -- Function output "fat-arrow" notation used for expressing output from input
 - `,` -- Commas are required for separating types on functions
-- `:` -- Colons allow for object:instanceof annotation
+- `:` -- Colons allow for object:instanceof annotation - This is not required or checked
 - `;` -- Semicolons allow for multiple values within the angle bracket notation
 - `()` -- Optional parentheses to group types, which will be treated as spaces by interpreter
 
-Spaces are allowed around commas and fat arrows, however spaces cannot be used inside type declarations. For instance
-`"object:subtype, number => array"` is valid, but `"ob ject:subtype, number => array"` is not.
+White space is stripped at parse time.
 
 **Important note about data types:**
 

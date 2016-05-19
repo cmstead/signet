@@ -1,7 +1,7 @@
 {
   "name": "signet",
-  "version": "0.12.0",
-  "description": "A function type signature library for Javascript",
+  "version": "0.12.1",
+  "description": "A type and function signature library for Javascript",
   "main": "./src/signet.types.js",
   "scripts": {
     "test": "node ./node_modules/mocha/bin/mocha ./test/signet.test.js ./test/signet.types.test.js ./test/signet.perf.test.js",
