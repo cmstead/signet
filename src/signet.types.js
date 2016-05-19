@@ -52,7 +52,7 @@
     signet.subtype('string')('formattedString', formattedStringType);
     
     function formattedStringType (valueStr, typeObj){
-        var pattern = new RegExp(typeObj.valueType[0]);
+        var pattern = new RegExp(typeObj.valueType.join(';'));
         
         return valueStr.match(pattern) !== null;
     }

@@ -80,6 +80,10 @@ describe('extension types', function () {
             assert.equal(signet.isTypeOf('R2Matrix')([[1, 2], [3, 4]]), true);
         });
         
+        it('should nest without aliasing', function () {
+            assert.equal(signet.isTypeOf('tuple<tuple<number;number>;tuple<number;number>>')([[1, 2], [3, 4]]), true);
+        });
+        
     });
     
     describe('boundedString', function () {

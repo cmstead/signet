@@ -192,8 +192,8 @@ In the browser environment, signet.min.js and signet.types.min.js in that order 
 Extended types are as follows:
 
 - `int` - number:int
-- `bounded<min<number>:max<number>>` - number:bounded
-- `boundedInt<min<number>:max<number>>` - number:int:bounded:boundedInt
+- `bounded<min<number>;max<number>>` - number:bounded
+- `boundedInt<min<number>;max<number>>` - number:int:bounded:boundedInt
 - `boundedString<minLength<int>;maxLength<int>>` - string:boundedString
 - `formattedString<regex>` - string:formattedString
 - `tuple<type;type;type...>` - array:tuple
@@ -215,10 +215,7 @@ the list should be viewed as a planned output order.
     - [x] Add enforce functions
     - [x] Update AST to reflect rich types including object subtypes, array value types and optional types
     - [x] Add build step to integrate minification for browsers
-
-- Test and development module
-    - [ ] Function to run tests against types as property tests, so type info can be kept fresh
-    - [ ] Function to return argument/signature mapping as key/value pairs
+    - [ ] Enforce function output
 
 ## Breaking Changes
 
