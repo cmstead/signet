@@ -26,6 +26,14 @@ describe('signet', function() {
             assert.equal(add.signature, 'number, number => number');
         });
 
+        it('should make signature function persist optional arguments', function() {
+            signet.sign('number, [number] => number', add);
+
+            add.signature = 'foo';
+
+            assert.equal(add.signature, 'number, [number] => number');
+        });
+
         it('should add a signature AST to passed function', function() {
             var expected = '[[{"type":"number","optional":false},{"type":"number","optional":false}],[{"type":"number","optional":false}]]';
 

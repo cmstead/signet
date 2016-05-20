@@ -55,9 +55,14 @@ var signet = (function () {
     // State machine execution
 
     function updateState(states, stateKey, type, value) {
-        return states[stateKey].reduce(function (key, rule) {
-            return rule(key, type, value);
-        }, stateKey);
+        var result = stateKey;
+        var stateSet = states[stateKey];
+        
+        for(var i = 0; i < stateSet.length; i++) {
+            result = stateSet[i](result, type, value);
+        }
+        
+        return result;
     }
 
     var updateLexState = updateState.bind(null, lexStates);
@@ -125,9 +130,19 @@ var signet = (function () {
         });
     }
 
-    function attachSignatureData(userFn, signature, tokenTree) {
+    function signatureBuilder(tokenTree) {
+        return function () {
+            return buildSignatureFromTree(tokenTree);
+        }
+    }
+
+    function attachSignatureData(userFn, tokenTree) {
         if (tokenTree.length > 1) {
-            attachProp(userFn, 'signature', signature);
+            Object.defineProperty(userFn, 'signature', {
+                get: signatureBuilder(tokenTree),
+                writeable: false
+            });
+
             attachProp(userFn, 'signatureTree', tokenTree);
         }
 
@@ -283,37 +298,37 @@ var signet = (function () {
         return !done ? buildWrapperArgs(signedFn, args.concat(['x' + args.length])) : args.join(',');
     }
 
-    function buildSignatureFromTree (tokenTree){
+    function buildSignatureFromTree(tokenTree) {
         var signature = '';
         var tempType;
         var i, j;
-        
+
         for (i = 0; i < tokenTree.length; i++) {
             if (i > 0) {
                 signature += ' => ';
             }
-            
+
             for (j = 0; j < tokenTree[i].length; j++) {
                 if (j > 0) {
                     signature += ', ';
                 }
                 tempType = buildTypeStr(tokenTree[i][j]);
-                
-                if(tokenTree[i][j].optional){
+
+                if (tokenTree[i][j].optional) {
                     tempType = '[' + tempType + ']';
                 }
-                
+
                 signature += tempType;
             }
         }
-        
+
         return signature;
     }
 
-    function throwOnTypeMismatch (type, value){
-        if(!isTypeOf(type)(value)) {
+    function throwOnTypeMismatch(type, value) {
+        if (!isTypeOf(type)(value)) {
             throw new Error('Expected return value of type ' + resultType + ' but got ' + typeof result);
-        }        
+        }
     }
 
     function callAndEnforce(signedFn, args) {
@@ -321,11 +336,10 @@ var signet = (function () {
 
         var result = signedFn.apply(null, args);
         var tokenTree = signedFn.signatureTree.slice(1);
-        var signature = buildSignatureFromTree(tokenTree);
         var expectedType = tokenTree.length > 1 ? 'function' : buildTypeStr(tokenTree[0][0]);
-        
+
         throwOnTypeMismatch(expectedType, result);
-        attachSignatureData(result, signature, tokenTree);
+        attachSignatureData(result, tokenTree);
 
         return tokenTree.length > 1 ? enforce(result) : result;
     }
@@ -347,7 +361,7 @@ var signet = (function () {
 
         throwOnInvalidSignature(tokenTree, userFn);
 
-        return attachSignatureData(userFn, signature, tokenTree);
+        return attachSignatureData(userFn, tokenTree);
     }
 
     function verify(signedFn, args) {
@@ -359,8 +373,7 @@ var signet = (function () {
     function enforce(signedFn) {
         var enforcementWrapper = buildEnforceWrapper(signedFn);
 
-        attachProp(enforcementWrapper, 'signature', signedFn.signature);
-        attachProp(enforcementWrapper, 'signatureTree', signedFn.signatureTree);
+        attachSignatureData(enforcementWrapper, signedFn.signatureTree);
         attachProp(enforcementWrapper, 'toString', signedFn.toString.bind(signedFn));
 
         return enforcementWrapper;
