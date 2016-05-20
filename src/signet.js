@@ -90,12 +90,6 @@ var signet = (function () {
 
     // Throw on error functions
 
-    function throwOnTypeMismatch(type, value, message) {
-        if (typeof value !== type) {
-            throw new TypeError(message + ', you provided ' + typeof value);
-        }
-    }
-
     function throwOnInvalidSignature(tokenTree, userFn) {
         var shortTokenTree = tokenTree <= 1;
         var typesOkay = tokenTree.reduce(updateLexState, 'init') === 'accept';
@@ -289,21 +283,42 @@ var signet = (function () {
         return !done ? buildWrapperArgs(signedFn, args.concat(['x' + args.length])) : args.join(',');
     }
 
+    function buildSignatureFromTree (tokenTree){
+        var signature = '';
+        var i, j;
+        
+        for (i = 0; i < tokenTree.length; i++) {
+            if (i > 0) {
+                signature += ' => ';
+            }
+            
+            for (j = 0; j < tokenTree[i].length; j++) {
+                if (j > 0) {
+                    signature += ', ';
+                }
+                
+                signature += tokenTree[i][j];
+            }
+        }
+        
+        return signature;
+    }
+
+    function throwOnTypeMismatch (type, value){
+        if(!isTypeOf(type)(value)) {
+            throw new Error('Expected return value of type ' + resultType + ' but got ' + typeof result);
+        }        
+    }
+
     function callAndEnforce(signedFn, args) {
         verify(signedFn, args);
 
         var result = signedFn.apply(null, args);
         var tokenTree = signedFn.signatureTree.slice(1);
-        var resultType = tokenTree.length > 1 ? 'function' : buildTypeStr(tokenTree[0][0]);
+        var signature = buildSignatureFromTree(tokenTree);
+        var expectedType = tokenTree.length > 1 ? 'function' : buildTypeStr(tokenTree[0][0]);
         
-        var signature = tokenTree.map(function (tokenSet) {
-            return tokenSet.map(buildTypeStr).join(', ');
-        }).join(' => ');
-
-        if(!isTypeOf(resultType)(result)) {
-            throw new Error('Expected return value of type ' + resultType + ' but got ' + typeof result);
-        }        
-        
+        throwOnTypeMismatch(expectedType, result);
         attachSignatureData(result, signature, tokenTree);
 
         return tokenTree.length > 1 ? enforce(result) : result;
