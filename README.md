@@ -36,15 +36,15 @@ arrays which may contain varied types.
 
 List of supported (built in) primary types
 
-- ()
-- * -- preferred syntax over 'any' type
-- array
-- boolean
-- function
-- number
-- object
-- string
-- symbol
+- `()`
+- `*` -- preferred syntax over 'any' type
+- `array`
+- `boolean`
+- `function`
+- `number`
+- `object`
+- `string`
+- `symbol`
 
 Example function signatures:
 
