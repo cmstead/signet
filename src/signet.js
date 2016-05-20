@@ -290,10 +290,20 @@ var signet = (function () {
     }
 
     function callAndEnforce(signedFn, args) {
-        var result = signedFn.apply(null, args);
-        var signature = splitSignature(signedFn.signature).slice(1).join(' => ');
-        var tokenTree = signedFn.signatureTree.slice(1);
+        verify(signedFn, args);
 
+        var result = signedFn.apply(null, args);
+        var tokenTree = signedFn.signatureTree.slice(1);
+        var resultType = tokenTree.length > 1 ? 'function' : buildTypeStr(tokenTree[0][0]);
+        
+        var signature = tokenTree.map(function (tokenSet) {
+            return tokenSet.map(buildTypeStr).join(', ');
+        }).join(' => ');
+
+        if(!isTypeOf(resultType)(result)) {
+            throw new Error('Expected return value of type ' + resultType + ' but got ' + typeof result);
+        }        
+        
         attachSignatureData(result, signature, tokenTree);
 
         return tokenTree.length > 1 ? enforce(result) : result;
@@ -301,13 +311,12 @@ var signet = (function () {
 
     function buildEnforceWrapper(signedFn) {
         var wrapperTemplate = 'return function enforceWrapper (' + buildWrapperArgs(signedFn, []) + ') {' +
-            'verify(signedFn, arguments);' +
             'return callAndEnforce(signedFn, Array.prototype.slice.call(arguments));' +
             '};';
 
-        var wrapperFn = new Function(['signedFn', 'verify', 'callAndEnforce'], wrapperTemplate);
+        var wrapperFn = new Function(['signedFn', 'callAndEnforce'], wrapperTemplate);
 
-        return wrapperFn(signedFn, verify, callAndEnforce);
+        return wrapperFn(signedFn, callAndEnforce);
     }
 
     // Core functionality

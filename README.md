@@ -214,7 +214,7 @@ the list should be viewed as a planned output order.
     - [x] Add enforce functions
     - [x] Update AST to reflect rich types including object subtypes, array value types and optional types
     - [x] Add build step to integrate minification for browsers
-    - [ ] Enforce function output
+    - [x] Enforce function output
 
 ## Breaking Changes
 

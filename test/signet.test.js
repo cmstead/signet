@@ -291,7 +291,7 @@ describe('signet', function() {
         });
 
         it('should enforce curried functions and resolve on success', function () {
-            var curriedAdd = signet.enforce('number => string => number', 
+            var curriedAdd = signet.enforce('number => string => string', 
                 function curriedAdd (a){
                     return function (b) {
                         return a + b;
@@ -302,7 +302,7 @@ describe('signet', function() {
         });
 
         //  Current goal
-        it.skip('should verify return value', function () {
+        it('should verify return value', function () {
             var badFn = signet.enforce(
                 '* => string',
                 function badFn (foo){
