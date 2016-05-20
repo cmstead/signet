@@ -285,6 +285,7 @@ var signet = (function () {
 
     function buildSignatureFromTree (tokenTree){
         var signature = '';
+        var tempType;
         var i, j;
         
         for (i = 0; i < tokenTree.length; i++) {
@@ -296,8 +297,13 @@ var signet = (function () {
                 if (j > 0) {
                     signature += ', ';
                 }
+                tempType = buildTypeStr(tokenTree[i][j]);
                 
-                signature += tokenTree[i][j];
+                if(tokenTree[i][j].optional){
+                    tempType = '[' + tempType + ']';
+                }
+                
+                signature += tempType;
             }
         }
         
