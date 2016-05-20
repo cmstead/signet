@@ -23,7 +23,7 @@ describe('performance - no assertions here', function () {
             signet.sign('number => number => number', functionFactory());
         }
         var totalTime = Date.now() - start;
-        console.log("Time to sign 1000 functions: " + totalTime);
+        console.log("\t\tAverage signing time over 1000 executions: " + totalTime + ' microseconds');
     });
 
     it('should measure performance of enforcing a function', function () {
@@ -34,7 +34,7 @@ describe('performance - no assertions here', function () {
             signet.enforce('number => number => number', functionFactory());
         }
         var totalTime = Date.now() - start;
-        console.log("Time to enforce 1000 functions: " + totalTime);
+        console.log("\t\tAverage enforcement time over 1000 executions: " + totalTime + ' microseconds');
     });
 
     it('should measure performance of verifying a function at call time', function () {
@@ -52,7 +52,7 @@ describe('performance - no assertions here', function () {
         }
 
         var totalTime = Date.now() - start;
-        console.log("Time to verify 1000 functions: " + totalTime);
+        console.log("\t\tAverage verification time over 1000 executions: " + totalTime + ' microseconds');
     });
 
 });
