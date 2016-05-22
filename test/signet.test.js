@@ -117,9 +117,18 @@ describe('signet', function() {
 
             assert.equal(result, add);
         });
+        
+        it('should attach an execution context', function () {
+            var testObj = {};
+            var signedFn = signet.sign('* => *', function (foo){
+                return 'bar';
+            }, testObj);
+            
+            assert.equal(signedFn.executionContext, testObj);
+        });
 
         it('should be signed', function() {
-            assert.equal(signet.sign.signature, 'string, function => function');
+            assert.equal(signet.sign.signature, 'string, function, [object] => function');
         });
 
     });
@@ -319,6 +328,15 @@ describe('signet', function() {
             );
             
             assert.throws(badFn.bind(null, 'foo'));
+        });
+        
+        it('should call function with passed object context', function () {
+            var testObj = { foo: 'bar' };
+            var enforcedFn = signet.enforce('() => *', function () {
+                return this.foo;
+            }, testObj);
+            
+            assert.equal(enforcedFn(), 'bar');
         });
 
     });

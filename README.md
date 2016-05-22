@@ -215,6 +215,7 @@ the list should be viewed as a planned output order.
     - [x] Update AST to reflect rich types including object subtypes, array value types and optional types
     - [x] Add build step to integrate minification for browsers
     - [x] Enforce function output
+    - [ ] Provide optional object context parameter in enforce signature
 
 ## Breaking Changes
 

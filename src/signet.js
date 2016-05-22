@@ -2,7 +2,7 @@ var signet = (function () {
     'use strict';
 
     var supportedTypes = {
-        '()': isType('string'),
+        '()': isType('undefined'),
         any: function () { return true; },
         '*': function () { return true; },
         array: isInstanceOf(Array),
@@ -136,7 +136,7 @@ var signet = (function () {
         }
     }
 
-    function attachSignatureData(userFn, tokenTree) {
+    function attachSignatureData(userFn, tokenTree, context) {
         if (tokenTree.length > 1) {
             Object.defineProperty(userFn, 'signature', {
                 get: signatureBuilder(tokenTree),
@@ -144,6 +144,7 @@ var signet = (function () {
             });
 
             attachProp(userFn, 'signatureTree', tokenTree);
+            attachProp(userFn, 'executionContext', context);
         }
 
         return userFn;
@@ -334,12 +335,12 @@ var signet = (function () {
     function callAndEnforce(signedFn, args) {
         verify(signedFn, args);
 
-        var result = signedFn.apply(null, args);
+        var result = signedFn.apply(signedFn.executionContext, args);
         var tokenTree = signedFn.signatureTree.slice(1);
         var expectedType = tokenTree.length > 1 ? 'function' : buildTypeStr(tokenTree[0][0]);
 
         throwOnTypeMismatch(expectedType, result);
-        attachSignatureData(result, tokenTree);
+        attachSignatureData(result, tokenTree, signedFn.executionContext);
 
         return tokenTree.length > 1 ? enforce(result) : result;
     }
@@ -356,12 +357,12 @@ var signet = (function () {
 
     // Core functionality
 
-    function sign(signature, userFn) {
+    function sign(signature, userFn, context) {
         var tokenTree = splitSignature(signature).map(buildTypeTree);
 
         throwOnInvalidSignature(tokenTree, userFn);
 
-        return attachSignatureData(userFn, tokenTree);
+        return attachSignatureData(userFn, tokenTree, context);
     }
 
     function verify(signedFn, args) {
@@ -379,8 +380,9 @@ var signet = (function () {
         return enforcementWrapper;
     }
 
-    var signAndEnforce = function (signature, userFn) {
-        return enforce(sign(signature, userFn));
+    var signAndEnforce = function (signature, userFn, context) {
+        var cleanContext = !isTypeOf('undefined')(context) ? context : null;
+        return enforce(sign(signature, userFn, cleanContext));
     }
 
     function extend(key, predicate) {
@@ -424,10 +426,10 @@ var signet = (function () {
 
     var signet = {
         alias: signAndEnforce('string, string => undefined', alias),
-        enforce: signAndEnforce('string, function => function', signAndEnforce),
+        enforce: signAndEnforce('string, function, [object] => function', signAndEnforce),
         extend: signAndEnforce('string, function => undefined', extend),
         isTypeOf: signAndEnforce('string => * => boolean', isTypeOf),
-        sign: signAndEnforce('string, function => function', sign),
+        sign: signAndEnforce('string, function, [object] => function', sign),
         subtype: signAndEnforce('string => string, function => undefined', subtype),
         verify: signAndEnforce('function, object => undefined', verify)
     };
