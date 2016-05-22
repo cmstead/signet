@@ -198,6 +198,25 @@ Extended types are as follows:
 - `tuple<type;type;type...>` - array:tuple
 - `taggedUnion<optionType;optionType;optionType>` - dynamic:taggedUnion
 
+## Execution context binding
+
+You can now bind an execution context for object instances or other, various reasons. It's also possible to sign and verify
+a constructor!
+
+    var MyObj = signet.sign(
+        'object => *',
+        function MyObj (foo) {
+            // Throws an error if constructor is not passed appropriate values
+            signet.verify(MyObj, arguments);
+            
+            this.foo = foo;
+            
+            // Enforce the function at construction time or the context will be wrong.
+            this.behavior = signet.enforce('() => *', this.behavior, this);
+        });
+    
+    MyObj.prototype.behavior = function (foo) { return this.foo.bar; };
+
 ## Development
 
 Signet development will proceed following the checklist below.  The intent is to deliver useful behavior at each step, so
@@ -215,7 +234,7 @@ the list should be viewed as a planned output order.
     - [x] Update AST to reflect rich types including object subtypes, array value types and optional types
     - [x] Add build step to integrate minification for browsers
     - [x] Enforce function output
-    - [ ] Provide optional object context parameter in enforce signature
+    - [x] Provide optional object context parameter in enforce signature
 
 ## Breaking Changes
 
