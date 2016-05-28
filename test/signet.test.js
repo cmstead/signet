@@ -1,5 +1,5 @@
 var assert = require('chai').assert;
-var signet = require('../src/signet');
+var signet = require('../src/signet')();
 
 describe('signet', function() {
 
@@ -321,13 +321,13 @@ describe('signet', function() {
         //  Current goal
         it('should verify return value', function () {
             var badFn = signet.enforce(
-                '* => string',
-                function badFn (foo){
+                '() => string',
+                function badFn (){
                     return 42;
                 }
             );
             
-            assert.throws(badFn.bind(null, 'foo'));
+            assert.throws(badFn, 'Expected return value of type string but got number');
         });
         
         it('should call function with passed object context', function () {
@@ -461,6 +461,10 @@ describe('signet', function() {
         
         it('should properly check higher-kinded types', function () {
             assert.equal(signet.isTypeOf('testRanged<0;10>')(7), true);
+        });
+
+        it('should throw when type does not exist', function () {
+            assert.throws(signet.isTypeOf('numumber'), 'Type numumber is not known');
         });
     });
     

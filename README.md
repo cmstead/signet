@@ -57,6 +57,17 @@ Example function signatures:
 
 ## Usage
 
+First it is recommended that you create a types file so the local signet object can be cached for your module:
+
+    var signet = require('signet')();
+    
+    //my aliased type
+    signet.alias('foo')('string');
+
+Now, include your types file into your other files and the signet types object will be properly enclosed in your module.
+
+### Signet behaviors
+
 Signet can be used two different ways to sign your functions, as a function wrapper or as a decoration of your function. 
 Below are examples of the two use cases:
 
@@ -237,6 +248,10 @@ the list should be viewed as a planned output order.
     - [x] Provide optional object context parameter in enforce signature
 
 ## Breaking Changes
+
+### 0.16.x
+
+- Signet and SignetTypes are now factories in node space to ensure types are encapsulated only in local module.  
 
 ### 0.9.x
 

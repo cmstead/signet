@@ -1,5 +1,5 @@
 var assert = require('chai').assert;
-var signet = require('../src/signet');
+var signet = require('../src/signet')();
 
 describe('performance - no assertions here', function () {
 

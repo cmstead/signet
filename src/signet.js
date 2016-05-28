@@ -1,4 +1,4 @@
-var signet = (function () {
+function signetFactory () {
     'use strict';
 
     var supportedTypes = {
@@ -328,7 +328,7 @@ var signet = (function () {
 
     function throwOnTypeMismatch(type, value) {
         if (!isTypeOf(type)(value)) {
-            throw new Error('Expected return value of type ' + resultType + ' but got ' + typeof result);
+            throw new Error('Expected return value of type ' + type + ' but got ' + typeof value);
         }
     }
 
@@ -410,21 +410,23 @@ var signet = (function () {
         var typeObj = buildTypeObj(typeStr);
 
         return function (value) {
-            var result = true;
+            var characteristic = supportedTypes[typeObj.type];
 
-            try {
-                result = supportedTypes[typeObj.type](value, typeObj);
-            } catch (e) {
-                result = false;
+            if(typeof characteristic === 'undefined') {
+                throw new Error('Type ' + buildTypeStr(typeObj) + ' is not known');
             }
 
-            return result;
+            try {
+                return characteristic(value, typeObj);
+            } catch (e) {
+                return false;
+            }
         };
     }
 
     // Final module definition
 
-    var signet = {
+    var signetApi = {
         alias: signAndEnforce('string, string => undefined', alias),
         enforce: signAndEnforce('string, function, [object] => function', signAndEnforce),
         extend: signAndEnforce('string, function => undefined', extend),
@@ -434,10 +436,12 @@ var signet = (function () {
         verify: signAndEnforce('function, object => undefined', verify)
     };
 
-    if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
-        module.exports = signet;
-    }
+    return signetApi;
 
-    return signet;
+};
 
-})();
+if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
+    module.exports = signetFactory;
+} else {
+    var signet = signetFactory();
+}

@@ -1,5 +1,5 @@
 var assert = require('chai').assert;
-var signet = require('../src/signet.types');
+var signet = require('../src/signet.types')();
 
 describe('extension types', function () {
     

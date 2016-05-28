@@ -1,8 +1,8 @@
-(function () {
+function signetTypeFactory () {
     'use strict';
 
     if (typeof require === 'function') {
-        var signet = require('./signet');
+        var signet = require('./signet')();
     }
 
     signet.subtype('number')('int', intType);
@@ -65,8 +65,12 @@
         }, false);
     }
 
-    if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
-        module.exports = signet;
-    }
+    return signet;
 
-})();
+};
+
+if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
+    module.exports = signetTypeFactory;
+} else {
+    return signetTypeFactory();
+}
