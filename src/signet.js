@@ -1,13 +1,13 @@
-function signetFactory () {
+function signetFactory() {
     'use strict';
 
     var supportedTypes = {
         '()': isType('undefined'),
         any: function () { return true; },
         '*': function () { return true; },
-        array: isInstanceOf(Array),
+        array: isArray,
         boolean: isType('boolean'),
-        function: isType('function'),
+        function: isFunction,
         number: isType('number'),
         object: isType('object'),
         string: isType('string'),
@@ -57,11 +57,11 @@ function signetFactory () {
     function updateState(states, stateKey, type, value) {
         var result = stateKey;
         var stateSet = states[stateKey];
-        
-        for(var i = 0; i < stateSet.length; i++) {
+
+        for (var i = 0; i < stateSet.length; i++) {
             result = stateSet[i](result, type, value);
         }
-        
+
         return result;
     }
 
@@ -76,10 +76,24 @@ function signetFactory () {
         }
     }
 
-    function isInstanceOf(obj) {
-        return function (value) {
-            return value instanceof obj;
+    function isArray(value, typeObj) {
+        var valuetype = !isType('undefined')(typeObj.valueType) ? typeObj.valueType[0] : '*';
+        var typeCheck = isTypeOf(valuetype);
+        var result = Array.isArray(value);
+
+        if (result && valuetype !== '*') {
+            result =  value.reduce(function (result, value) {
+                return result && typeCheck(value);
+            }, true);
         }
+        
+        return result;
+    }
+
+    function isFunction(value, typeObj) {
+        var valueTypeLength = Array.isArray(typeObj.valueType) ? typeObj.valueType.length : Number.MAX_VALUE;
+        
+        return isType('function')(value) && value.length <= valueTypeLength;
     }
 
     function isBadTypeList(types) {
@@ -412,7 +426,7 @@ function signetFactory () {
         return function (value) {
             var characteristic = supportedTypes[typeObj.type];
 
-            if(typeof characteristic === 'undefined') {
+            if (typeof characteristic === 'undefined') {
                 throw new Error('Type ' + buildTypeStr(typeObj) + ' is not known');
             }
 

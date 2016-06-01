@@ -466,6 +466,18 @@ describe('signet', function() {
         it('should throw when type does not exist', function () {
             assert.throws(signet.isTypeOf('numumber'), 'Type numumber is not known');
         });
+        
+        it('should check arrays with a value type', function () {
+            assert.equal(signet.isTypeOf('array')([42]), true);
+            assert.equal(signet.isTypeOf('array<*>')([42]), true);
+            assert.equal(signet.isTypeOf('array<string>')([42]), false);
+        });
+        
+        it('should check functions with specified argument types', function () {
+            assert.equal(signet.isTypeOf('function')(function () {}), true);
+            assert.equal(signet.isTypeOf('function<string;string>')(function (a, b) {}), true);
+            assert.equal(signet.isTypeOf('function<string;string>')(function (a, b, c) {}), false);
+        });
     });
     
 });
