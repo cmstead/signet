@@ -228,26 +228,11 @@ a constructor!
     
     MyObj.prototype.behavior = function (foo) { return this.foo.bar; };
 
-## Development
-
-Signet development will proceed following the checklist below.  The intent is to deliver useful behavior at each step, so
-the list should be viewed as a planned output order.
-
-- Core functionality
-    - [x] Set type signature string on a function with the signature property (signet.sign)
-    - [x] Preliminary validation of signature string for general format (full correctness not required)
-    - [x] Validation of signature string, ensuring only valid signature strings are added (parsing and interpretation)
-    - [x] Validate signature encompasses all values in length of function
-    - [x] Validate signature primary types are native Javascript types (includes custom types array and any)
-    - [x] Add function to verify passed arguments for all types
-    - [x] Extend argument verification function to handle optional type specs
-    - [x] Add enforce functions
-    - [x] Update AST to reflect rich types including object subtypes, array value types and optional types
-    - [x] Add build step to integrate minification for browsers
-    - [x] Enforce function output
-    - [x] Provide optional object context parameter in enforce signature
-
 ## Breaking Changes
+
+### 0.18.0
+
+- Function signatures now verify parameter length against total length and length of required paramters.
 
 ### 0.16.x
 

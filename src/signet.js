@@ -109,18 +109,39 @@ function signetFactory() {
 
     // Throw on error functions
 
-    function throwOnInvalidSignature(tokenTree, userFn) {
-        var shortTokenTree = tokenTree <= 1;
-        var typesOkay = tokenTree.reduce(updateLexState, 'init') === 'accept';
-        var lengthOkay = tokenTree[0].length >= userFn.length;
-
-        var message = !lengthOkay ?
-            'All function parameters are not accounted for in type definition' :
-            'Invalid function signature; ensure all input and output paths are valid';
-
-        if (!lengthOkay || shortTokenTree || !typesOkay) {
-            throw new Error(message);
+    function throwOnBadTypes (tokenTree){
+        if(tokenTree.reduce(updateLexState, 'init') !== 'accept') {
+            throw new Error('Signature contains unkown data types.');
         }
+    }
+
+    function throwOnShortSignature (tokenTree){
+        if(tokenTree <= 1) {
+            throw new Error('Invalid signature: all signatures must have input and output types');
+        }
+    }
+
+    function getRequiredParamCount (tokenSet){
+        var count = 0;
+        
+        for(var i = 0; i < tokenSet.length; i++) {
+            count += tokenSet[i].optional ? 0 : 1;
+        }
+        
+        return count;
+    }
+
+    function throwOnParameterMismatch (tokenTree, userFn){
+        var tokenSet = tokenTree[0];
+        if(tokenSet.length < userFn.length || userFn.length < getRequiredParamCount(tokenSet)) {
+            throw new Error('Function parameter count and argument type count do not match');
+        }
+    }
+
+    function throwOnInvalidSignature(tokenTree, userFn) {
+        throwOnShortSignature(tokenTree);
+        throwOnBadTypes(tokenTree);
+        throwOnParameterMismatch(tokenTree, userFn);
     }
 
     function throwOnTypeState(failState, state, message) {
@@ -244,7 +265,7 @@ function signetFactory() {
             type: type,
             subType: !isValueType ? secondaryType : undefined,
             valueType: isValueType ? splitSubTypes(secondaryType) : undefined,
-            optional: token.match(/^\[.*\]$/) !== null
+            optional: token.match(/^(\[.*\])|(\(\))$/) !== null
         };
     }
 
@@ -408,7 +429,7 @@ function signetFactory() {
     }
 
     function subtype(existingType) {
-        var typeSignature = existingType + ', object, function => boolean';
+        var typeSignature = existingType + ', [object], [function] => boolean';
 
         return function (key, predicate) {
             var enforcedPredicate = signAndEnforce(typeSignature, predicate);

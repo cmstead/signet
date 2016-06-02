@@ -91,6 +91,11 @@ describe('signet', function() {
         it('should throw an error if all function parameters are not typed', function() {
             assert.throws(signet.sign.bind(null, 'number => number', add));
         });
+        
+        it('should throw an error if parameter count does not equal required argument count', function () {
+            function testFn (a){}
+            assert.throws(signet.sign.bind(null, 'string, string => undefined', testFn));
+        });
 
         it('should throw an error if any variable type names are unrecognized', function() {
             assert.throws(signet.sign.bind(null, 'foo, number => number', add));
@@ -220,12 +225,12 @@ describe('signet', function() {
         });
 
         it('should throw an error if second value is a type mismatch', function() {
-            var testFn = buildSignedFn('number, string => any');
+            var testFn = signet.sign('number, string => any', function(a, b){});
             assert.throws(signet.verify.bind(null, testFn, [5, 5]));
         });
 
         it('should throw an error if later values are mismatched', function() {
-            var testFn = buildSignedFn('number, any, string => any');
+            var testFn = signet.sign('number, any, string => any', function (a, b, c) {});
             assert.throws(signet.verify.bind(null, testFn, [5, 'foo', 5]));
         });
 
@@ -318,7 +323,6 @@ describe('signet', function() {
             assert.doesNotThrow(curriedAdd(1).bind(null, 'foo'));
         });
 
-        //  Current goal
         it('should verify return value', function () {
             var badFn = signet.enforce(
                 '() => string',
