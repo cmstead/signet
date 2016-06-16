@@ -193,6 +193,14 @@ type check can be reused without recomputing the type object definition:
     isRanged3to4(3.72); // true
     isRanged3to4(4000); // false
 
+### Type Chain Information
+
+Signet supports accessing a type's inheritance chain.  This means, if you want to know what a type does, you can review the chain
+and get a rich understanding of the ancestors which make up the particular type.
+
+    signet.typeChain('array'); // * -> object -> array
+    signet.typeChain('tuple'); // * -> object -> array -> tuple
+
 ## Extended types
 
 Signet has extended types provided as a separate module.  In the node environment, the extended types
