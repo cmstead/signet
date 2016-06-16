@@ -72,5 +72,5 @@ function signetTypeFactory () {
 if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
     module.exports = signetTypeFactory;
 } else {
-    return signetTypeFactory();
+    signetTypeFactory();
 }
