@@ -484,4 +484,19 @@ describe('signet', function() {
         });
     });
     
+    describe('typeChain', function () {
+        
+        it('should return valid type strings', function (){
+            signet.extend('testExtend', function (value) { return true; });
+            signet.subtype('testExtend')('testSubtype', function (value) { return true; });
+            signet.alias('testAlias', 'testExtend');
+
+            assert.equal(signet.typeChain('array'), '* -> object -> array');
+            assert.equal(signet.typeChain('testExtend'), '* -> testExtend');
+            assert.equal(signet.typeChain('testSubtype'), '* -> testExtend -> testSubtype');
+            assert.equal(signet.typeChain('testAlias'), '* -> testExtend -> testAlias');
+            assert.equal(signet.typeChain('badType'), 'undefined type');
+        });
+
+    });
 });

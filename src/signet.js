@@ -15,6 +15,18 @@ function signetFactory() {
         undefined: isType('undefined')
     };
 
+    supportedTypes['*'].typeChain = '*';
+    supportedTypes['()'].typeChain = '* -> undefined -> ()';
+    supportedTypes['any'].typeChain = '* -> any';
+    supportedTypes['array'].typeChain = '* -> object -> array';
+    supportedTypes['boolean'].typeChain = '* -> boolean';
+    supportedTypes['function'].typeChain = '* -> function';
+    supportedTypes['number'].typeChain = '* -> number';
+    supportedTypes['object'].typeChain = '* -> object';
+    supportedTypes['string'].typeChain = '* -> string';
+    supportedTypes['symbol'].typeChain = '* -> symbol';
+    supportedTypes['undefined'].typeChain = '* -> undefined';
+
     // State rules for type lexer
 
     var lexRules = [
@@ -82,17 +94,17 @@ function signetFactory() {
         var result = Array.isArray(value);
 
         if (result && valuetype !== '*') {
-            result =  value.reduce(function (result, value) {
+            result = value.reduce(function (result, value) {
                 return result && typeCheck(value);
             }, true);
         }
-        
+
         return result;
     }
 
     function isFunction(value, typeObj) {
         var valueTypeLength = Array.isArray(typeObj.valueType) ? typeObj.valueType.length : Number.MAX_VALUE;
-        
+
         return isType('function')(value) && value.length <= valueTypeLength;
     }
 
@@ -109,31 +121,31 @@ function signetFactory() {
 
     // Throw on error functions
 
-    function throwOnBadTypes (tokenTree){
-        if(tokenTree.reduce(updateLexState, 'init') !== 'accept') {
+    function throwOnBadTypes(tokenTree) {
+        if (tokenTree.reduce(updateLexState, 'init') !== 'accept') {
             throw new Error('Signature contains unkown data types.');
         }
     }
 
-    function throwOnShortSignature (tokenTree){
-        if(tokenTree <= 1) {
+    function throwOnShortSignature(tokenTree) {
+        if (tokenTree <= 1) {
             throw new Error('Invalid signature: all signatures must have input and output types');
         }
     }
 
-    function getRequiredParamCount (tokenSet){
+    function getRequiredParamCount(tokenSet) {
         var count = 0;
-        
-        for(var i = 0; i < tokenSet.length; i++) {
+
+        for (var i = 0; i < tokenSet.length; i++) {
             count += tokenSet[i].optional ? 0 : 1;
         }
-        
+
         return count;
     }
 
-    function throwOnParameterMismatch (tokenTree, userFn){
+    function throwOnParameterMismatch(tokenTree, userFn) {
         var tokenSet = tokenTree[0];
-        if(tokenSet.length < userFn.length || userFn.length < getRequiredParamCount(tokenSet)) {
+        if (tokenSet.length < userFn.length || userFn.length < getRequiredParamCount(tokenSet)) {
             throw new Error('Function parameter count and argument type count do not match');
         }
     }
@@ -434,11 +446,14 @@ function signetFactory() {
         return function (key, predicate) {
             var enforcedPredicate = signAndEnforce(typeSignature, predicate);
             extend(key, enforcedPredicate);
+            supportedTypes[key].typeChain = typeChain(existingType) + ' -> ' + key;
         }
     }
 
-    function alias(key, typedef) {
-        extend(key, isTypeOf(typedef));
+    function alias(key, typestr) {
+        var typeName = typestr.split(/(\<|\:)/)[0];
+        extend(key, isTypeOf(typestr));
+        supportedTypes[key].typeChain = typeChain(typeName) + ' -> ' + key;
     }
 
     function isTypeOf(typeStr) {
@@ -459,6 +474,13 @@ function signetFactory() {
         };
     }
 
+    function typeChain (key){
+        var isUndefined = supportedTypes['undefined'];
+        var characteristic = supportedTypes[key];
+        var chainStr = !isUndefined(characteristic) ? characteristic.typeChain : 'undefined type';
+        return isUndefined(chainStr) ? '* -> ' + key : chainStr;
+    }
+
     // Final module definition
 
     var signetApi = {
@@ -468,6 +490,7 @@ function signetFactory() {
         isTypeOf: signAndEnforce('string => * => boolean', isTypeOf),
         sign: signAndEnforce('string, function, [object] => function', sign),
         subtype: signAndEnforce('string => string, function => undefined', subtype),
+        typeChain: signAndEnforce('string => string', typeChain),
         verify: signAndEnforce('function, object => undefined', verify)
     };
 
