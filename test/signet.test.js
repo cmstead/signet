@@ -499,4 +499,17 @@ describe('signet', function() {
         });
 
     });
+
+    describe('duckTypeFactory', function () {
+
+        it('should produce a duck type characteristic predicate', function () {
+            var typeObj = { foo: 'string', bar: 'array' };
+            var typePredicate = signet.duckTypeFactory(typeObj);
+
+            assert.equal(typePredicate({ foo: 'test', bar: [] }), true);
+            assert.equal(typePredicate({ foo: 'test', bar: {} }), false);
+            assert.equal(typePredicate({ foo: 42, bar: [] }), false);
+        });
+
+    });
 });

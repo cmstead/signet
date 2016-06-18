@@ -481,10 +481,27 @@ function signetFactory() {
         return isUndefined(chainStr) ? '* -> ' + key : chainStr;
     }
 
+    function buildTypeTuples (typeObj) {
+        return Object.keys(typeObj).map(function (key) {
+            return { key: key, typeCheck: isTypeOf(typeObj[key]) };
+        });
+    }
+
+    function duckTypeFactory (typeObj) {
+        var typeTuples = buildTypeTuples(typeObj);
+
+        return function (value) {
+            return typeTuples.reduce(function (result, typeInfo) {
+                return result && typeInfo.typeCheck(value[typeInfo.key]);
+            }, true);
+        }
+    }
+
     // Final module definition
 
     var signetApi = {
         alias: signAndEnforce('string, string => undefined', alias),
+        duckTypeFactory: signAndEnforce('object => function', duckTypeFactory),
         enforce: signAndEnforce('string, function, [object] => function', signAndEnforce),
         extend: signAndEnforce('string, function => undefined', extend),
         isTypeOf: signAndEnforce('string => * => boolean', isTypeOf),

@@ -193,6 +193,20 @@ type check can be reused without recomputing the type object definition:
     isRanged3to4(3.72); // true
     isRanged3to4(4000); // false
 
+### Object duck typing
+
+Duck typing functions can be created using the duckTypeFactory function.  This means, if an object 
+type depends on extant properties with correct types, it can be predefined with an object type definition.
+
+    var myObjDef = { foo: 'string', bar: 'array' };
+    var checkMyObj = signet.duckTypeFactory(myObjDef);
+
+    signet.subtype('object')('myObj', checkMyObj);
+
+    signet.isTypeOf('myObj')({ foo: 'testing', bar: [1, 2, 3] }); // true
+    signet.isTypeOf('myObj')({ foo: 'testing', bar: null }); // false
+    signet.isTypeOf('myObj')({ foo: 42, bar: [] }); // false
+
 ### Type Chain Information
 
 Signet supports accessing a type's inheritance chain.  This means, if you want to know what a type does, you can review the chain
