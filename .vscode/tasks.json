@@ -15,6 +15,12 @@
 			"taskName": "test",
 			"isBuildCommand": false,
 			"showOutput": "always"
+		},
+		{
+			"taskName": "run",
+			"args": ["minify"],
+			"isBuildCommand": true,
+			"showOutput": "always"
 		}
 	]
 }

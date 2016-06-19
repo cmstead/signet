@@ -1,11 +1,11 @@
 {
   "name": "signet",
-  "version": "0.20.0",
+  "version": "0.20.1",
   "description": "A type and function signature library for Javascript",
   "main": "./src/signet.types.js",
   "scripts": {
     "test": "node ./node_modules/mocha/bin/mocha ./test/signet.test.js ./test/signet.types.test.js ./test/signet.perf.test.js",
-    "minify": "uglifyjs ./src/signet.js ./src/signet.types.js -o ./src/signet.min.js"
+    "minify": "uglifyjs ./src/signet.js ./src/signet.types.js -o ./src/signet.min.js --mangle --compress"
   },
   "repository": {
     "type": "git",

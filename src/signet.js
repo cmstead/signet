@@ -440,12 +440,17 @@ function signetFactory() {
         supportedTypes[key] = predicate;
     }
 
-    function subtype(existingType) {
-        var typeSignature = existingType + ', [object], [function] => boolean';
+    function constructSubtype (existingPred, newPred){
+        return function (value, typeObj) {
+            return existingPred(value, typeObj) && newPred(value, typeObj);
+        };
+    }
 
-        return function (key, predicate) {
-            var enforcedPredicate = signAndEnforce(typeSignature, predicate);
-            extend(key, enforcedPredicate);
+    function subtype(existingType) {
+        var existingPred = isTypeOf(existingType);
+
+        return function (key, newPred) {
+            extend(key, constructSubtype(existingPred, newPred));
             supportedTypes[key].typeChain = typeChain(existingType) + ' -> ' + key;
         }
     }
