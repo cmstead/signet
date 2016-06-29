@@ -522,6 +522,4 @@ function signetFactory() {
 
 if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
     module.exports = signetFactory;
-} else {
-    var signet = signetFactory();
 }

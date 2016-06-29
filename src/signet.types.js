@@ -1,9 +1,7 @@
 function signetTypeFactory () {
     'use strict';
 
-    if (typeof require === 'function') {
-        var signet = require('./signet')();
-    }
+    var signet = typeof require === 'function' ? require('./signet')() : signetFactory();
 
     signet.subtype('number')('int', intType);
 
@@ -72,5 +70,5 @@ function signetTypeFactory () {
 if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
     module.exports = signetTypeFactory;
 } else {
-    signetTypeFactory();
+    var signet = signetTypeFactory();
 }
