@@ -12,7 +12,8 @@ function signetFactory() {
         object: isType('object'),
         string: isType('string'),
         symbol: isType('symbol'),
-        undefined: isType('undefined')
+        undefined: isType('undefined'),
+        void: isType('undefined')
     };
 
     supportedTypes['*'].typeChain = '*';
@@ -26,6 +27,7 @@ function signetFactory() {
     supportedTypes['string'].typeChain = '* -> string';
     supportedTypes['symbol'].typeChain = '* -> symbol';
     supportedTypes['undefined'].typeChain = '* -> undefined';
+    supportedTypes['void'].typeChain = '* -> undefined -> void';
 
     // State rules for type lexer
 
