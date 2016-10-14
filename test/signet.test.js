@@ -343,6 +343,17 @@ describe('signet', function() {
             assert.equal(enforcedFn(), 'bar');
         });
 
+        it('should enforce based on a contract object', function () {
+            var add = signet.enforce({
+                signature: 'number, number => number',
+                action: function add(a, b) {
+                    return a + b;
+                }
+            });
+
+            assert.throws(add.bind(null, '1.5', 2));
+        });
+
     });
     
     describe('extend', function () {

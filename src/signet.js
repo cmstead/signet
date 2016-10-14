@@ -429,7 +429,7 @@ function signetFactory() {
         return enforcementWrapper;
     }
 
-    var signAndEnforce = function (signature, userFn, context) {
+    function signAndEnforce (signature, userFn, context) {
         var cleanContext = !isTypeOf('undefined')(context) ? context : null;
         return enforce(sign(signature, userFn, cleanContext));
     }
@@ -506,10 +506,31 @@ function signetFactory() {
 
     // Final module definition
 
+    var enforcedSignAndEnforce = signAndEnforce('string, function, [object] => function', signAndEnforce)
+
+    var isContractOptions = duckTypeFactory({
+        signature: 'string',
+        action: 'function'
+    });
+
+    function enforceFn (contract, action, context){
+        var signature = contract;
+
+        if(isContractOptions(contract)){
+            signature = contract.signature;
+            action = contract.action;
+            context = contract.context;
+        } else if(!isTypeOf('string')(contract) && !isTypeOf('function')(action)) {
+            throw new Error('Enforce requires a contract object or a signature and an action');
+        }
+
+        return signAndEnforce(signature, action, context);
+    }
+
     var signetApi = {
         alias: signAndEnforce('string, string => undefined', alias),
         duckTypeFactory: signAndEnforce('object => function', duckTypeFactory),
-        enforce: signAndEnforce('string, function, [object] => function', signAndEnforce),
+        enforce: enforceFn,
         extend: signAndEnforce('string, function => undefined', extend),
         isTypeOf: signAndEnforce('string => * => boolean', isTypeOf),
         sign: signAndEnforce('string, function, [object] => function', sign),
