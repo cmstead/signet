@@ -1,4 +1,12 @@
-# Signet
+Signet
+======
+
+# THIS VERSION IS OBSOLETE
+
+For the current version of Signet, visit the new Signet project:
+
+[https://github.com/signetjs/signet](https://github.com/signetjs/signet)
+
 
 ## A type and function signature library for Javascript
 
